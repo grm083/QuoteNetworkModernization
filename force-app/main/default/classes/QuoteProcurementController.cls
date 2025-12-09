@@ -17,9 +17,28 @@ public class QuoteProcurementController {
     @TestVisible
     private static Boolean USE_VALIDATION_SERVICE = true;
 
-    // Validation service instance
+    // Phase 3 - Additional service layer feature flags
+    @TestVisible
+    private static Boolean USE_POSITION_SERVICE = true;
+
+    @TestVisible
+    private static Boolean USE_PRODUCT_CONFIG_SERVICE = true;
+
+    @TestVisible
+    private static Boolean USE_WORK_ORDER_SERVICE = true;
+
+    // Service instances
     @TestVisible
     private static QuoteLineValidationService validationService = new QuoteLineValidationService();
+
+    @TestVisible
+    private static PositionManagementService positionService = new PositionManagementService();
+
+    @TestVisible
+    private static ProductConfigurationService productConfigService = new ProductConfigurationService();
+
+    @TestVisible
+    private static WorkOrderService workOrderService = new WorkOrderService();
     //SDT-30089 - start
     public static String specialHandling_Automatic_Reason = 'Automatically flagged by system';
     public static String specialHandling_BackDated_Reason = 'Back-dated service requested';
@@ -894,6 +913,17 @@ public class QuoteProcurementController {
     }
     @AuraEnabled
     public static string deleteQuoteOrders(List<Quote_Order__c> quoteOrders){
+        // Quote Network Modernization - Phase 3: Delegate to WorkOrderService
+        if (USE_WORK_ORDER_SERVICE) {
+            try {
+                return workOrderService.deleteOrders(quoteOrders);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in WorkOrderService.deleteOrders: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         string fResult = 'SUCCESS';
         try{
             delete quoteOrders;
@@ -1278,11 +1308,21 @@ public class QuoteProcurementController {
     
     @AuraEnabled
     public static List<Account_Position__c> allPositions(QuoteProcurementController.HeaderWrapper header) {
-        
+        // Quote Network Modernization - Phase 3: Delegate to PositionManagementService
+        if (USE_POSITION_SERVICE) {
+            try {
+                return positionService.getAllPositions(header.locationId);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in PositionManagementService.getAllPositions: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         List<Account_Position__c> ALP = new List<Account_Position__c>();
         List<Account_Position__c> ALPDefault = new List<Account_Position__c>();
         List<Account_Position__c> ALPOther = new List<Account_Position__c>();
-        
+
         ALPDefault = [SELECT Id, Name, Container_Position__c, AlternateStreet__c,
                AlternateCity__c, AlternateState__c, AlternatePostalCode__c
                FROM Account_Position__c
@@ -1292,19 +1332,29 @@ public class QuoteProcurementController {
                AlternateCity__c, AlternateState__c, AlternatePostalCode__c
                FROM Account_Position__c
                WHERE AccountId__c =: header.locationId and Container_Position__c != 'Default' ORDER BY Container_Position__c ASC];
-        
+
         ALP.addAll(ALPDefault);
         ALP.addAll(ALPOther);
 
         return ALP;
-        
+
     }
     
     @AuraEnabled
     public static List<Account_Position__c> searchPositions(QuoteProcurementController.HeaderWrapper header, String searchString) {
-        
+        // Quote Network Modernization - Phase 3: Delegate to PositionManagementService
+        if (USE_POSITION_SERVICE) {
+            try {
+                return positionService.searchPositions(header.locationId, searchString);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in PositionManagementService.searchPositions: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         List<Account_Position__c> ALP = new List<Account_Position__c>();
-        
+
         if(!String.isBlank(searchString))
         {
             List<List<SObject>> searchList = [FIND :searchString
@@ -1319,7 +1369,7 @@ public class QuoteProcurementController {
             ALP = allPositions(header);
         }
         return ALP;
-        
+
     }
     
     /*@AuraEnabled
@@ -1387,7 +1437,21 @@ public class QuoteProcurementController {
     @AuraEnabled
     public static String storeOnsite(QuoteProcurementController.HeaderWrapper header, String positionName)
     {
-        //System.debug('In storeOnsite');
+        // Quote Network Modernization - Phase 3: Delegate to PositionManagementService
+        if (USE_POSITION_SERVICE) {
+            try {
+                PositionDetails details = new PositionDetails(header.locationId, positionName);
+                details.quoteLineId = header.parentId;
+
+                PositionOperationResult result = positionService.createOnsitePosition(details);
+                return result.getStatusString();
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in PositionManagementService.createOnsitePosition: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         String result;
         if(validatePosition(header.locationId, positionName))
         {
@@ -1411,9 +1475,30 @@ public class QuoteProcurementController {
     @AuraEnabled
     public static String storeOffsite(QuoteProcurementController.HeaderWrapper header, String OffsitePosition , string street, string city,string state ,string postal)
     {
-        //System.debug('In storeOffsite');
+        // Quote Network Modernization - Phase 3: Delegate to PositionManagementService
+        if (USE_POSITION_SERVICE) {
+            try {
+                PositionDetails details = new PositionDetails();
+                details.accountId = header.locationId;
+                details.containerPosition = OffsitePosition;
+                details.isOffsite = true;
+                details.alternateStreet = street;
+                details.alternateCity = city;
+                details.alternateState = state;
+                details.alternatePostalCode = postal;
+                details.quoteLineId = header.parentId;
+
+                PositionOperationResult result = positionService.createOffsitePosition(details);
+                return result.getStatusString();
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in PositionManagementService.createOffsitePosition: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         String result;
-        
+
         Account_Position__c accPosition = new Account_Position__c();
         accPosition.AccountId__c = header.locationId;
         accPosition.AlternateStreet__c	 = !String.isBlank(street) ? street : Constant_Util.EMPTY_STRING;
@@ -1424,21 +1509,21 @@ public class QuoteProcurementController {
         accPosition.Container_Position__c = Constant_Util.OFFSITE + Constant_Util.COLON + Constant_Util.BLANKSPACE + OffsitePosition;
         if(!String.isBlank(street) || !String.isBlank(city) || !String.isBlank(state) || !String.isBlank(postal))
         {
-            accPosition.Container_Position__c += 
-            ' at ' + 
-            accPosition.AlternateStreet__c + Constant_Util.BLANKSPACE + 
-            accPosition.AlternateCity__c + Constant_Util.BLANKSPACE + 
-            accPosition.AlternateState__c + Constant_Util.BLANKSPACE + 
+            accPosition.Container_Position__c +=
+            ' at ' +
+            accPosition.AlternateStreet__c + Constant_Util.BLANKSPACE +
+            accPosition.AlternateCity__c + Constant_Util.BLANKSPACE +
+            accPosition.AlternateState__c + Constant_Util.BLANKSPACE +
             accPosition.AlternatePostalCode__c;
         }
-        
+
 
         if(validatePosition(header.locationId, accPosition.Container_Position__c))
         {
             insert accPosition;
 
             updateALPOnQuoteLine(header, accPosition.Id, accPosition.Container_Position__c, true);
-            
+
             result = 'Success';
         }
         else
@@ -2414,7 +2499,17 @@ public class QuoteProcurementController {
 
     @AuraEnabled
     public static List<SBQQ__ProductOption__c> getAccessories(Id productId) {
+        // Quote Network Modernization - Phase 3: Delegate to ProductConfigurationService
+        if (USE_PRODUCT_CONFIG_SERVICE) {
+            try {
+                return productConfigService.getAccessories(productId);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in ProductConfigurationService.getAccessories: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
 
+        // Original implementation (fallback)
         List<SBQQ__ProductOption__c> accessoryList = new List<SBQQ__ProductOption__c>();
         //SDT-23055: adding few more fields in query and setting order by SBQQ__Number__c DESC
         accessoryList = [SELECT Id, SBQQ__ConfiguredSKU__r.Name, SBQQ__OptionalSKU__c,SBQQ__OptionalSKU__r.Name, SBQQ__QuantityEditable__c, SBQQ__Quantity__c
