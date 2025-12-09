@@ -107,19 +107,21 @@ public class QuoteLineValidationService {
     private void initializeValidationRules() {
         rulesByStage = new Map<ValidationContext.Stage, List<IValidationRule>>();
 
-        // Draft stage rules
+        // Draft stage rules - Basic validation
         List<IValidationRule> draftRules = new List<IValidationRule>{
             new ScheduleFrequencyRule(),
             new VendorActiveStatusRule()
         };
         rulesByStage.put(ValidationContext.Stage.DRAFT, draftRules);
 
-        // Product Configured stage: Draft + Vendor rules
+        // Product Configured stage: Draft + Vendor and MAS rules
         List<IValidationRule> productConfiguredRules = new List<IValidationRule>();
         productConfiguredRules.addAll(draftRules);
         productConfiguredRules.addAll(new List<IValidationRule>{
             new VendorRequiredRule(),
-            new MASLibraryRequiredRule()
+            new MASLibraryRequiredRule(),
+            new VendorCommitDateRule(),
+            new VCRCodeRequiredRule()
         });
         rulesByStage.put(ValidationContext.Stage.PRODUCT_CONFIGURED, productConfiguredRules);
 
@@ -127,15 +129,23 @@ public class QuoteLineValidationService {
         List<IValidationRule> costConfiguredRules = new List<IValidationRule>();
         costConfiguredRules.addAll(productConfiguredRules);
         costConfiguredRules.addAll(new List<IValidationRule>{
-            new OccurrenceTypeRule()
-            // Additional cost-related rules can be added here
+            new OccurrenceTypeRule(),
+            new CostUOMRequiredRule(),
+            new RemovalSwapoutSizeRule()
         });
         rulesByStage.put(ValidationContext.Stage.COST_CONFIGURED, costConfiguredRules);
 
         // Price Configured stage: Cost Configured + Price rules
         List<IValidationRule> priceConfiguredRules = new List<IValidationRule>();
         priceConfiguredRules.addAll(costConfiguredRules);
-        // Additional price-related rules can be added here
+        priceConfiguredRules.addAll(new List<IValidationRule>{
+            new MASUniqueIdRequiredRule(),
+            new PricingMethodRequiredRule(),
+            new PriceUOMRequiredRule(),
+            new ListPriceRequiredRule(),
+            new ManagementFeePriceRule(),
+            new SteppedPriceRule()
+        });
         rulesByStage.put(ValidationContext.Stage.PRICE_CONFIGURED, priceConfiguredRules);
     }
 

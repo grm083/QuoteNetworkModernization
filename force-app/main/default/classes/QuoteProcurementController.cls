@@ -5,12 +5,21 @@
 //Date: 6/14/2021
 
 public class QuoteProcurementController {
-    
-    //The Purpose of this class will be to showcase the quote lines to a user 
+
+    //The Purpose of this class will be to showcase the quote lines to a user
     //in a simple consumable interface.  Some additional bells and whistles will be added
     //to ensure that users can also append cost, price, vendor details and MAS information
     //should that be desired in future releases
     public static set<string> wasteCategorySet = new set<string>{'Waste Stream', 'Waste Category'};
+
+    // Quote Network Modernization - Service Layer Integration
+    // Feature flag to enable new validation service (set to true to use new service)
+    @TestVisible
+    private static Boolean USE_VALIDATION_SERVICE = true;
+
+    // Validation service instance
+    @TestVisible
+    private static QuoteLineValidationService validationService = new QuoteLineValidationService();
     //SDT-30089 - start
     public static String specialHandling_Automatic_Reason = 'Automatically flagged by system';
     public static String specialHandling_BackDated_Reason = 'Back-dated service requested';
@@ -896,13 +905,48 @@ public class QuoteProcurementController {
     }
     
     //SDT-20085 - Yeshas K
+    // Quote Network Modernization - Updated to use QuoteLineValidationService
     public static string assignQuoteLineErrorMEssage(SBQQ__QuoteLine__c qLine){
         string errMsg = '';
-        
-        if(qLine.SBQQ__Quote__r.SBQQ__Status__c=='Draft'){ 
+
+        // Feature flag: Use new validation service or fall back to old logic
+        if (USE_VALIDATION_SERVICE) {
+            try {
+                // Use new validation service
+                ValidationContext context = new ValidationContext(qLine);
+                ValidationResult result = validationService.validate(qLine, context);
+
+                if (result.hasErrors()) {
+                    errMsg = result.getErrorMessage();
+                }
+            } catch (Exception ex) {
+                // Log error and fall back to old logic
+                System.debug(LoggingLevel.ERROR, 'Error in QuoteLineValidationService: ' + ex.getMessage());
+                System.debug(LoggingLevel.ERROR, 'Stack trace: ' + ex.getStackTraceString());
+
+                // Fall back to old validation logic
+                errMsg = assignQuoteLineErrorMEssageOld(qLine);
+            }
+        } else {
+            // Use old validation logic
+            errMsg = assignQuoteLineErrorMEssageOld(qLine);
+        }
+
+        return errMsg;
+    }
+
+    /**
+     * @description Original validation logic (preserved for fallback and comparison)
+     * @deprecated Use QuoteLineValidationService instead
+     */
+    @TestVisible
+    private static string assignQuoteLineErrorMEssageOld(SBQQ__QuoteLine__c qLine){
+        string errMsg = '';
+
+        if(qLine.SBQQ__Quote__r.SBQQ__Status__c=='Draft'){
             errMsg = vFStage(qLine);
         }
-        else if(qLine.SBQQ__Quote__r.SBQQ__Status__c=='Product Configured'){ 
+        else if(qLine.SBQQ__Quote__r.SBQQ__Status__c=='Product Configured'){
             errMsg = vFStage(qLine);
             if(errMsg==''){
                 errMsg = vSStage(qLine);
