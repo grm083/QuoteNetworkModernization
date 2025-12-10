@@ -27,6 +27,10 @@ public class QuoteProcurementController {
     @TestVisible
     private static Boolean USE_WORK_ORDER_SERVICE = true;
 
+    // Phase 3D - Delivery orchestration service feature flag
+    @TestVisible
+    private static Boolean USE_DELIVERY_ORCHESTRATION_SERVICE = true;
+
     // Phase 4 - Integration service layer feature flags
     @TestVisible
     private static Boolean USE_VENDOR_SERVICE = true;
@@ -49,6 +53,10 @@ public class QuoteProcurementController {
 
     @TestVisible
     private static WorkOrderService workOrderService = new WorkOrderService();
+
+    // Phase 3D - Delivery orchestration service instance
+    @TestVisible
+    private static DeliveryOrchestrationService deliveryOrchestrationService = new DeliveryOrchestrationService();
 
     // Phase 4 - Integration service instances
     @TestVisible
@@ -2889,8 +2897,19 @@ public class QuoteProcurementController {
     }
 
     @AuraEnabled
-    public static QuoteSummaryWrapper createDelivery(OrderWrapper ow, String orderType, string placementInstructions) 
+    public static QuoteSummaryWrapper createDelivery(OrderWrapper ow, String orderType, string placementInstructions)
     {
+        // Quote Network Modernization - Phase 3D: Delegate to DeliveryOrchestrationService
+        if (USE_DELIVERY_ORCHESTRATION_SERVICE) {
+            try {
+                return deliveryOrchestrationService.executeDeliveryCreation(ow, orderType, placementInstructions);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in DeliveryOrchestrationService: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         //String result;
         QuoteSummaryWrapper wrapper = new QuoteSummaryWrapper();
         wrapper.isAssetChanged = false;

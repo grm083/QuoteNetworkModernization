@@ -208,4 +208,48 @@ public class BaselineUpdateService {
         dateManager.updateDatesForAllLines(quoteLines, serviceDate, serviceEndDate);
         return quoteLines;
     }
+
+    /**
+     * @description Get extra pickup lines that need start date updates
+     * Replaces QuoteProcurementController.getExtraPickupLineForStartDateUpdate() lines 5635-5673
+     * @param bundlewisePickupQuoteLinesMap Map of pickup lines by bundle ID
+     * @param bundlewiseExtraPickupQuoteLinesMap Map of extra pickup lines by bundle ID
+     * @param updateFromIntakeScreen Whether update is from intake screen
+     * @return List of extra pickup quote lines to update
+     * @story SDT-32782
+     */
+    public List<SBQQ__QuoteLine__c> getExtraPickupLineForStartDateUpdate(
+        Map<Id, SBQQ__QuoteLine__c> bundlewisePickupQuoteLinesMap,
+        Map<Id, SBQQ__QuoteLine__c> bundlewiseExtraPickupQuoteLinesMap,
+        Boolean updateFromIntakeScreen
+    ) {
+        List<SBQQ__QuoteLine__c> extraPickupQuoteLineListForUpdate = new List<SBQQ__QuoteLine__c>();
+
+        if (bundlewiseExtraPickupQuoteLinesMap == null || bundlewiseExtraPickupQuoteLinesMap.isEmpty()) {
+            return extraPickupQuoteLineListForUpdate;
+        }
+
+        if (bundlewisePickupQuoteLinesMap == null || bundlewisePickupQuoteLinesMap.isEmpty()) {
+            return extraPickupQuoteLineListForUpdate;
+        }
+
+        for (Id parentQuoteLineId : bundlewiseExtraPickupQuoteLinesMap.keySet()) {
+            SBQQ__QuoteLine__c extraPickupQuoteLine = bundlewiseExtraPickupQuoteLinesMap.get(parentQuoteLineId);
+
+            // Check if Pickup exists for the Extra Pickup for the same Bundle
+            if (bundlewisePickupQuoteLinesMap.containsKey(parentQuoteLineId)) {
+                Date pickupLineStartDate = bundlewisePickupQuoteLinesMap.get(parentQuoteLineId).SBQQ__StartDate__c;
+                Date extraPickupLineStartDate = extraPickupQuoteLine.SBQQ__StartDate__c;
+
+                // Check if Extra Pickup lines need to be updated
+                if (extraPickupLineStartDate != pickupLineStartDate && pickupLineStartDate != null) {
+                    SBQQ__QuoteLine__c extraPickupLineForUpdate = bundlewiseExtraPickupQuoteLinesMap.get(parentQuoteLineId);
+                    extraPickupLineForUpdate.SBQQ__StartDate__c = pickupLineStartDate;
+                    extraPickupQuoteLineListForUpdate.add(extraPickupLineForUpdate);
+                }
+            }
+        }
+
+        return extraPickupQuoteLineListForUpdate;
+    }
 }

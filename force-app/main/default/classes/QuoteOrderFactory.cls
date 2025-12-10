@@ -139,21 +139,17 @@ public class QuoteOrderFactory {
 
     /**
      * @description Create multiple delivery orders for quote lines
-     * @param ow OrderWrapper with order details
      * @param deliveryQuoteLines List of delivery quote lines
-     * @param positionName Position name
+     * @param existingOrders Existing quote orders
+     * @param ow OrderWrapper with order details
      * @param placementInstructions Placement instructions
-     * @param vendorServiceId Vendor service ID
-     * @param serviceTypeOrderIdMap Map of service type to existing order IDs
      * @return List of Quote_Order__c records
      */
     public List<Quote_Order__c> createDeliveryOrders(
-        QuoteProcurementController.OrderWrapper ow,
         List<SBQQ__QuoteLine__c> deliveryQuoteLines,
-        String positionName,
-        String placementInstructions,
-        String vendorServiceId,
-        Map<String, Id> serviceTypeOrderIdMap
+        List<Quote_Order__c> existingOrders,
+        QuoteProcurementController.OrderWrapper ow,
+        String placementInstructions
     ) {
         List<Quote_Order__c> orders = new List<Quote_Order__c>();
 
@@ -161,14 +157,22 @@ public class QuoteOrderFactory {
             return orders;
         }
 
+        // Build service type to order ID map
+        Map<String, Id> serviceTypeOrderIdMap = buildServiceTypeOrderIdMap(existingOrders);
+
         // Check if any orders already exist
-        Boolean isOrderAvailable = serviceTypeOrderIdMap != null
-            && serviceTypeOrderIdMap.containsKey(ow.serviceType);
-        Boolean isKeyOrderAvailable = serviceTypeOrderIdMap != null
-            && (serviceTypeOrderIdMap.containsKey(Constant_Util.LOCK_DELIVERY)
-                || serviceTypeOrderIdMap.containsKey(Constant_Util.Haul_Away_Service));
+        Boolean isOrderAvailable = serviceTypeOrderIdMap.containsKey(ow.serviceType);
+        Boolean isKeyOrderAvailable = serviceTypeOrderIdMap.containsKey(Constant_Util.LOCK_DELIVERY)
+            || serviceTypeOrderIdMap.containsKey(Constant_Util.Haul_Away_Service);
+
+        String positionName = '';
 
         for (SBQQ__QuoteLine__c ql : deliveryQuoteLines) {
+            // Get position name from quote line
+            if (ql.Location_Position_Name__c != null) {
+                positionName = ql.Location_Position_Name__r.Container_Position__c;
+            }
+
             // Get existing order ID if available
             Id existingOrderId = null;
             if (isOrderAvailable) {
@@ -188,7 +192,7 @@ public class QuoteOrderFactory {
                 ql,
                 positionName,
                 placementInstructions,
-                vendorServiceId,
+                ow.vendorServiceId,
                 existingOrderId
             );
 
@@ -196,6 +200,71 @@ public class QuoteOrderFactory {
         }
 
         return orders;
+    }
+
+    /**
+     * @description Create removal order from existing orders list
+     * @param ow OrderWrapper with order details
+     * @param quoteLine Quote line for removal
+     * @param existingOrders Existing quote orders
+     * @return Quote_Order__c
+     */
+    public Quote_Order__c createRemovalOrder(
+        QuoteProcurementController.OrderWrapper ow,
+        SBQQ__QuoteLine__c quoteLine,
+        List<Quote_Order__c> existingOrders
+    ) {
+        // Build service type to order ID map
+        Map<String, Id> serviceTypeOrderIdMap = buildServiceTypeOrderIdMap(existingOrders);
+
+        // Get position name from quote line
+        String positionName = '';
+        if (quoteLine.Location_Position_Name__c != null) {
+            positionName = quoteLine.Location_Position_Name__r.Container_Position__c;
+        }
+
+        // Get existing removal order ID if available
+        Id existingOrderId = serviceTypeOrderIdMap.get('Removal');
+
+        return createRemovalOrder(ow, quoteLine, positionName, '', existingOrderId);
+    }
+
+    /**
+     * @description Build map of service type to order ID from existing orders
+     * @param existingOrders List of existing quote orders
+     * @return Map of service type to order ID
+     */
+    public Map<String, Id> buildServiceTypeOrderIdMap(List<Quote_Order__c> existingOrders) {
+        Map<String, Id> serviceTypeOrderIdMap = new Map<String, Id>();
+
+        if (existingOrders == null || existingOrders.isEmpty()) {
+            return serviceTypeOrderIdMap;
+        }
+
+        for (Quote_Order__c order : existingOrders) {
+            if (order.Service_Type__c != null) {
+                serviceTypeOrderIdMap.put(order.Service_Type__c, order.Id);
+            }
+        }
+
+        return serviceTypeOrderIdMap;
+    }
+
+    /**
+     * @description Upsert quote orders
+     * @param orders List of quote orders to upsert
+     */
+    public void upsertOrders(List<Quote_Order__c> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return;
+        }
+
+        try {
+            upsert orders;
+        } catch (Exception ex) {
+            System.debug(LoggingLevel.ERROR, 'Error upserting quote orders: ' + ex.getMessage());
+            throw ex;
+        }
     }
 
     /**
