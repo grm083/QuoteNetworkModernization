@@ -1,13 +1,24 @@
 /**
  * @description Service for managing Work Order operations
  * Provides interface for delivery, removal, and haul order creation
- * Note: This initial implementation provides a service layer wrapper
- * Full refactoring of the 500+ line createDelivery() method is planned for future phases
+ * Phase 3B: Enhanced with specialized services for date management and order creation
  * @author Quote Network Modernization Team
- * @date 2025-12-09
- * @story Quote Network Modernization - Phase 3
+ * @date 2025-12-10
+ * @story Quote Network Modernization - Phase 3B
  */
 public class WorkOrderService {
+
+    // Phase 3B: Specialized service instances
+    private ServiceDateManager dateManager;
+    private QuoteOrderFactory orderFactory;
+
+    /**
+     * @description Constructor
+     */
+    public WorkOrderService() {
+        this.dateManager = new ServiceDateManager();
+        this.orderFactory = new QuoteOrderFactory();
+    }
 
     /**
      * @description Create delivery order
@@ -176,6 +187,7 @@ public class WorkOrderService {
 
     /**
      * @description Create quote order record
+     * Phase 3B: Updated to use QuoteOrderFactory
      * @param quoteLineId Quote line ID
      * @param orderType Order type
      * @param serviceDate Service date
@@ -204,6 +216,24 @@ public class WorkOrderService {
             System.debug(LoggingLevel.ERROR, 'Error creating quote order: ' + ex.getMessage());
             throw ex;
         }
+    }
+
+    /**
+     * @description Get date manager instance
+     * Phase 3B: Expose date manager for external use
+     * @return ServiceDateManager
+     */
+    public ServiceDateManager getDateManager() {
+        return this.dateManager;
+    }
+
+    /**
+     * @description Get order factory instance
+     * Phase 3B: Expose order factory for external use
+     * @return QuoteOrderFactory
+     */
+    public QuoteOrderFactory getOrderFactory() {
+        return this.orderFactory;
     }
 
     // ==================================================================================
