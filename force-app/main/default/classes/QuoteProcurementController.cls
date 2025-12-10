@@ -27,6 +27,16 @@ public class QuoteProcurementController {
     @TestVisible
     private static Boolean USE_WORK_ORDER_SERVICE = true;
 
+    // Phase 4 - Integration service layer feature flags
+    @TestVisible
+    private static Boolean USE_VENDOR_SERVICE = true;
+
+    @TestVisible
+    private static Boolean USE_MAS_SERVICE = true;
+
+    @TestVisible
+    private static Boolean USE_AVAILABILITY_SERVICE = true;
+
     // Service instances
     @TestVisible
     private static QuoteLineValidationService validationService = new QuoteLineValidationService();
@@ -39,6 +49,16 @@ public class QuoteProcurementController {
 
     @TestVisible
     private static WorkOrderService workOrderService = new WorkOrderService();
+
+    // Phase 4 - Integration service instances
+    @TestVisible
+    private static VendorManagementService vendorService = new VendorManagementService();
+
+    @TestVisible
+    private static MASIntegrationService masService = new MASIntegrationService();
+
+    @TestVisible
+    private static AssetAvailabilityService availabilityService = new AssetAvailabilityService();
     //SDT-30089 - start
     public static String specialHandling_Automatic_Reason = 'Automatically flagged by system';
     public static String specialHandling_BackDated_Reason = 'Back-dated service requested';
@@ -524,9 +544,20 @@ public class QuoteProcurementController {
                     prod.procurementErrorMessage += '\n' + costCompareMessage;
             }
             
-             //SDT-31246  && SDT-31583 
+             //SDT-31246  && SDT-31583
              if(header.Availability_Flag__c != null){
-                prod.procurementErrorMessage = AAV_AvailabilityUtility.getAvailabilityBellIconMessage(header, prod.procurementErrorMessage);                
+                // Quote Network Modernization - Phase 4: Delegate to AssetAvailabilityService
+                if (USE_AVAILABILITY_SERVICE) {
+                    try {
+                        prod.procurementErrorMessage = availabilityService.getAvailabilityBellIconMessage(header, prod.procurementErrorMessage);
+                    } catch (Exception ex) {
+                        System.debug(LoggingLevel.ERROR, 'Error in AssetAvailabilityService.getAvailabilityBellIconMessage: ' + ex.getMessage());
+                        // Fallback to utility class
+                        prod.procurementErrorMessage = AAV_AvailabilityUtility.getAvailabilityBellIconMessage(header, prod.procurementErrorMessage);
+                    }
+                } else {
+                    prod.procurementErrorMessage = AAV_AvailabilityUtility.getAvailabilityBellIconMessage(header, prod.procurementErrorMessage);
+                }
                 system.debug('Test Availability MSG '+ prod.procurementErrorMessage );
             }
             //END
@@ -630,22 +661,36 @@ public class QuoteProcurementController {
     
     @AuraEnabled
     public static Boolean updateVendorDetails(HeaderWrapper headerRecord) {
-        
+        // Quote Network Modernization - Phase 4: Delegate to VendorManagementService
+        if (USE_VENDOR_SERVICE) {
+            try {
+                return vendorService.updateVendorDetails(
+                    headerRecord.parentId,
+                    headerRecord.vendorId,
+                    headerRecord.sCode
+                );
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in VendorManagementService.updateVendorDetails: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         Boolean success;
-        
+
         List<SBQQ__QuoteLine__c> QuoteLines = [SELECT Id, Vendor__c,sCode__c
                                                FROM SBQQ__QuoteLine__c
                                                WHERE Id =: headerRecord.parentId OR SBQQ__RequiredBy__c =: headerRecord.parentId OR
                                                SBQQ__RequiredBy__r.SBQQ__RequiredBy__c =: headerRecord.parentId];
-        
+
         system.debug('Selected s-code is: ' + headerRecord.sCode);
         system.debug('Selected vendor is: ' + headerRecord.vendorName);
-        
+
         for (SBQQ__QuoteLine__c QuoteLine: QuoteLines) {
             QuoteLine.Vendor__c = headerRecord.vendorId;
             QuoteLine.sCode__c = headerRecord.sCode;
         }
-        
+
         try{
             update QuoteLines;
             success = true;
@@ -653,9 +698,9 @@ public class QuoteProcurementController {
             system.debug(e.getMessage());
             success = false;
         }
-        
+
         return success;
-        
+
     }
     
     @AuraEnabled
@@ -689,10 +734,28 @@ public class QuoteProcurementController {
     //This will update every quote line with the same MAS details for consistency.
     @AuraEnabled
     public static MASResponseWrapper writeMASDetails(HeaderWrapper headerRecord) {
-        
+        // Quote Network Modernization - Phase 4: Delegate to MASIntegrationService
+        if (USE_MAS_SERVICE) {
+            try {
+                MASIntegrationService.MASResponseWrapper response =
+                    masService.writeMASDetails(headerRecord.parentId, headerRecord.MAS);
+
+                // Convert to controller's MASResponseWrapper
+                MASResponseWrapper controllerResponse = new MASResponseWrapper();
+                controllerResponse.IsSuccess = response.isSuccess;
+                controllerResponse.ErrorMessage = response.errorMessage;
+                return controllerResponse;
+
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in MASIntegrationService.writeMASDetails: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         Boolean success;
-        
-        List<SBQQ__QuoteLine__c> QuoteHeaders = [SELECT Id, MASLibrary__c, MASCompany__c, MASAccount__c, MASCustomerUniqueId__c, MASServiceLine__c, 
+
+        List<SBQQ__QuoteLine__c> QuoteHeaders = [SELECT Id, MASLibrary__c, MASCompany__c, MASAccount__c, MASCustomerUniqueId__c, MASServiceLine__c,
                                                  MASBox__c, BypassPriceReview__c, BypassMASServiceChange__c, SetupComment__c, DoNotCreateMASTicket__c,
                                                  DoNotCreateTaskGridTickets__c,//added DoNotCreateTaskGridTickets__c for SDT 29392
                                                  // Commented 'SetupComment__c' field reference for story SDT-25787 to change the DataType from 'Text(255)' to 'Long Text(1500)' Will uncomment after DataType is changed
@@ -701,7 +764,7 @@ public class QuoteProcurementController {
                                                  FROM SBQQ__QuoteLine__c
                                                  WHERE Id =: headerRecord.parentId OR SBQQ__RequiredBy__c =: headerRecord.parentId OR
                                                  SBQQ__RequiredBy__r.SBQQ__RequiredBy__c =: headerRecord.parentId];
-        
+
         for (SBQQ__QuoteLine__c QuoteHeader: QuoteHeaders ) {
             if(!String.isBlank(headerRecord.MAS.MASLibrary))
                 QuoteHeader.MASLibrary__c = headerRecord.MAS.MASLibrary;
@@ -762,9 +825,20 @@ public class QuoteProcurementController {
 
     @AuraEnabled
     public static boolean bypassPriceReview(id quoteLineId, string masLibrary){
+        // Quote Network Modernization - Phase 4: Delegate to MASIntegrationService
+        if (USE_MAS_SERVICE) {
+            try {
+                return masService.bypassPriceReview(quoteLineId, masLibrary);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in MASIntegrationService.bypassPriceReview: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         boolean byPassReviewFlag;
         List<SBQQ__QuoteLine__c> quoteLineList = [SELECT Id,SBQQ__RequiredBy__c,BypassPriceReview__c,sCode__c,Vendor__r.Parent_Vendor_ID__c,SBQQ__Quote__r.Name, Name,
-                                                 (SELECT id, AAV_APIRequestOutput__c from Asset_Availabilities__r) 
+                                                 (SELECT id, AAV_APIRequestOutput__c from Asset_Availabilities__r)
                                                   FROM SBQQ__QuoteLine__c
                                                   WHERE Id =:quoteLineId ];
 
@@ -1272,14 +1346,24 @@ public class QuoteProcurementController {
     //accommodate this request.
    @AuraEnabled
     public static List<Account> searchVendors(String searchString) {
-        
+        // Quote Network Modernization - Phase 4: Delegate to VendorManagementService
+        if (USE_VENDOR_SERVICE) {
+            try {
+                return vendorService.searchVendors(searchString);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in VendorManagementService.searchVendors: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         List<Account> vendorList = new List<Account>();
-        
+
         List<List<SObject>> searchList = [FIND :searchString
                                           IN ALL FIELDS
-                                          RETURNING Account(Id, Name, AccountNumber, Vendor_Business_Unit__c, ShippingState, ShippingCity,FacilityCode__c, Parent_Vendor_Id__c, Status__c,Vendor_Id__c 
+                                          RETURNING Account(Id, Name, AccountNumber, Vendor_Business_Unit__c, ShippingState, ShippingCity,FacilityCode__c, Parent_Vendor_Id__c, Status__c,Vendor_Id__c
                                                             WHERE RecordType.Name = 'Vendor')];
-        
+
         vendorList = (Account[])searchList[0];
 
         // 45005 
