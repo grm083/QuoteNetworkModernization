@@ -162,15 +162,30 @@ public class QuoteTriggerHandler {
         Map<Id, SBQQ__Quote__c> oldMap,
         Map<Id, SBQQ__Quote__c> newMap
     ) {
+        // Initialize monitoring
+        QuoteLifecycleMonitoringService monitor = QuoteLifecycleMonitoringService.getInstance();
+
         try {
             QuoteLifecycleOrchestrator orchestrator = new QuoteLifecycleOrchestrator();
 
             for (SBQQ__Quote__c quote : QuoteList) {
                 SBQQ__Quote__c oldQuote = oldMap.get(quote.Id);
 
+                // Detect change type for monitoring
+                QuoteChangeDetectorService changeDetector = new QuoteChangeDetectorService();
+                QuoteChangeDetectorService.ChangeDetectionResult changes =
+                    changeDetector.detectChanges(quote, oldQuote);
+                String changeType = changeDetector.getPrimaryChangeType(changes);
+
+                // Start monitoring
+                String metricId = monitor.startProcessing(quote.Id, changeType);
+
                 // Process quote changes
                 QuoteLifecycleOrchestrator.ProcessingResult result =
                     orchestrator.processQuoteChange(quote, oldQuote);
+
+                // End monitoring
+                monitor.endProcessing(metricId, result.success, result.errors, result.warnings);
 
                 // Log any processing errors
                 if (!result.success && !result.errors.isEmpty()) {
@@ -205,6 +220,9 @@ public class QuoteTriggerHandler {
 
             // Don't throw - allow other trigger logic to continue
             System.debug(LoggingLevel.ERROR, 'Quote lifecycle orchestrator failed: ' + ex.getMessage());
+        } finally {
+            // Flush metrics and send alerts if needed
+            monitor.flushMetrics();
         }
     }
 }
