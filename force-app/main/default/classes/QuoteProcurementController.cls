@@ -41,6 +41,10 @@ public class QuoteProcurementController {
     @TestVisible
     private static Boolean USE_AVAILABILITY_SERVICE = true;
 
+    // Phase 10.1 - Data mapper service feature flag
+    @TestVisible
+    private static Boolean USE_DATA_MAPPER_SERVICE = true;
+
     // Service instances
     @TestVisible
     private static QuoteLineValidationService validationService = new QuoteLineValidationService();
@@ -67,6 +71,10 @@ public class QuoteProcurementController {
 
     @TestVisible
     private static AssetAvailabilityService availabilityService = new AssetAvailabilityService();
+
+    // Phase 10.1 - Data mapper service instance
+    @TestVisible
+    private static QuoteDataMapperService dataMapperService = new QuoteDataMapperService();
     //SDT-30089 - start
     public static String specialHandling_Automatic_Reason = 'Automatically flagged by system';
     public static String specialHandling_BackDated_Reason = 'Back-dated service requested';
@@ -96,6 +104,17 @@ public class QuoteProcurementController {
 
     @AuraEnabled
     public static ProductsWrapper buildQuoteWrapper(String quoteId) {
+        // Phase 10.1: Delegate to QuoteDataMapperService
+        if (USE_DATA_MAPPER_SERVICE) {
+            try {
+                return dataMapperService.buildQuoteWrapper(quoteId);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in QuoteDataMapperService.buildQuoteWrapper: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         SBQQ__Quote__c parentQuote = [SELECT Id, SBQQ__Account__r.Parent.AccountNumber,
                                       SBQQ__Account__r.ParentId, Project__c, SBQQ__Account__c,
                                       SBQQ__Account__r.Division__c, SBQQ__Account__r.Geography__c,
@@ -115,7 +134,7 @@ public class QuoteProcurementController {
                       							  FROM SBQQ__QuoteLine__c
                       							  WHERE SBQQ__Quote__c =: quoteId AND SBQQ__RequiredBy__c = Null];
         List<HeaderWrapper> confProducts = new List<HeaderWrapper>();
-        
+
         for (SBQQ__QuoteLine__c header : headerRecords){
             HeaderWrapper prod = new HeaderWrapper();
             prod.caseType = parentQuote.Case_Type__c;
@@ -150,7 +169,7 @@ public class QuoteProcurementController {
 	    prod.equipmentTypeCode = header.SBQQ__ProductCode__c;//SDT-38040-MAA
         prod.vendorName = header.Vendor__r.Name;
         prod.parentVendorId =  header.Vendor__r.Parent_Vendor_Id__c;
-            
+
             List<SBQQ__QuoteLine__c> detailRecords = [SELECT SBQQ__ProductName__c, SBQQ__ProductCode__c, SBQQ__ProductFamily__c
            											  FROM SBQQ__QuoteLine__c
                       								  WHERE (SBQQ__RequiredBy__c =: header.Id OR SBQQ__RequiredBy__r.SBQQ__RequiredBy__c =: header.Id) AND SBQQ__ProductFamily__c != 'Waste Category'];
@@ -164,7 +183,7 @@ public class QuoteProcurementController {
                 }
             }
            confProducts.add(prod);
-            
+
         }
         pw.configuredProducts = confProducts;
         return pw;
@@ -338,27 +357,35 @@ public class QuoteProcurementController {
        
     @AuraEnabled
     public static ProductsWrapper buildWrapper(String quoteId) {
-        
-        
-        
+        // Phase 10.1: Delegate to QuoteDataMapperService
+        if (USE_DATA_MAPPER_SERVICE) {
+            try {
+                return dataMapperService.buildWrapper(quoteId);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in QuoteDataMapperService.buildWrapper: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         SBQQ__Quote__c parentQuote = [SELECT Id, SBQQ__Account__r.Parent.AccountNumber
                                FROM SBQQ__Quote__c
                                WHERE Id =: quoteId];
-        
+
         map<String, String> companyCategoriesMap = AcornCompanyDetails.getAcornCCMap(parentQuote.SBQQ__Account__r.Parent.AccountNumber);
-        
-        //Define the new product wrapper and store the picklist values in the 
+
+        //Define the new product wrapper and store the picklist values in the
         //highest level of the wrapper class
         ProductsWrapper pw = new ProductsWrapper();
         pw.disableMAS = TRUE;
         pw.disableCost = TRUE;
         pw.disablePrice = TRUE;
         //pw = setUserAccess(pw);
-        
+
         //Store the header records in a list for iteration and further query
         List<SBQQ__QuoteLine__c> headerRecords = getQuoteProducts(quoteId);
         Map<Id, Boolean> bundleStatusMap = PricingRequestSTPProcess.getQuoteProductDetail(quoteId);
-        
+
         if (headerRecords.size() == 0 || headerRecords == Null) {
             pw.singleQuoteId = quoteId;
             return pw;
