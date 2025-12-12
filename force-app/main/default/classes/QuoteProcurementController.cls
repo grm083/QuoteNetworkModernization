@@ -1104,6 +1104,17 @@ public class QuoteProcurementController {
     }
     //SDT-20085 - Yeshas K
     public static string vFStage(SBQQ__QuoteLine__c qLine){
+        // Phase 10.2: Delegate to QuoteLineValidationService
+        if (USE_VALIDATION_SERVICE) {
+            try {
+                return validationService.validateStageF(qLine);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in QuoteLineValidationService.validateStageF: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         string errMsg = '';
         if(qLine.Occurrence_Type__c=='SOC' || qLine.Occurrence_Type__c=='SCH'){
             if(qLine.Schedule_Frequency__c == '' || qLine.Schedule_Frequency__c == null){
@@ -1115,22 +1126,33 @@ public class QuoteProcurementController {
             }
         }
         //Additional validation:vendor is inactive
-        
-            if (((qline.SBQQ__Quote__r.SBQQ__Type__c == 'Amendment' ||qline.SBQQ__Quote__r.SBQQ__Type__c == 'Exception' || qline.SBQQ__Quote__r.SBQQ__Type__c == 'Correction' || 
-                 (qline.SBQQ__Quote__r.SBQQ__Type__c == 'Quote' && qline.SBQQ__Quote__r.STP__c == FALSE ) 
-                 ) || 
+
+            if (((qline.SBQQ__Quote__r.SBQQ__Type__c == 'Amendment' ||qline.SBQQ__Quote__r.SBQQ__Type__c == 'Exception' || qline.SBQQ__Quote__r.SBQQ__Type__c == 'Correction' ||
+                 (qline.SBQQ__Quote__r.SBQQ__Type__c == 'Quote' && qline.SBQQ__Quote__r.STP__c == FALSE )
+                 ) ||
                  (qline.SBQQ__Quote__r.SBQQ__Type__c == 'Quote' && qline.SBQQ__Quote__r.STP__c == TRUE )
                  )&& qLine.Vendor__c != null) {
                 string vendorStatus = qLine.Vendor__r.Status__c;
              // Only check vendor status if vendor is not null
              if (vendorStatus == 'Inactive') {
-                errMsg = strVendorInactive; 
+                errMsg = strVendorInactive;
              }
             }
         return errMsg;
     }
     //SDT-20085 - Yeshas K
     public static string vSStage(SBQQ__QuoteLine__c qLine){
+        // Phase 10.2: Delegate to QuoteLineValidationService
+        if (USE_VALIDATION_SERVICE) {
+            try {
+                return validationService.validateStageS(qLine);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in QuoteLineValidationService.validateStageS: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         string errMsg = '';
 
     //SDT-32124 -- add method to evaluate not new service and Quoteline changed
@@ -1306,6 +1328,17 @@ public class QuoteProcurementController {
     }
 
     public static string vTStage(SBQQ__QuoteLine__c qLine){
+        // Phase 10.2: Delegate to QuoteLineValidationService
+        if (USE_VALIDATION_SERVICE) {
+            try {
+                return validationService.validateStageT(qLine);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in QuoteLineValidationService.validateStageT: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         string errMsg = '';
         //Additional validation:vendor is inactive
           if ((qline.SBQQ__Quote__r.SBQQ__Type__c == 'Amendment' ||qline.SBQQ__Quote__r.SBQQ__Type__c == 'Exception' || qline.SBQQ__Quote__r.SBQQ__Type__c == 'Correction' || (qline.SBQQ__Quote__r.SBQQ__Type__c == 'Quote' && qline.SBQQ__Quote__r.STP__c == FALSE) ) && qLine.Vendor__c != null) {
