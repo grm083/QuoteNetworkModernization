@@ -45,6 +45,10 @@ public class QuoteProcurementController {
     @TestVisible
     private static Boolean USE_DATA_MAPPER_SERVICE = true;
 
+    // Phase 10.4 - Quote line operations service feature flag
+    @TestVisible
+    private static Boolean USE_QUOTE_LINE_OPERATIONS_SERVICE = true;
+
     // Service instances
     @TestVisible
     private static QuoteLineValidationService validationService = new QuoteLineValidationService();
@@ -75,6 +79,11 @@ public class QuoteProcurementController {
     // Phase 10.1 - Data mapper service instance
     @TestVisible
     private static QuoteDataMapperService dataMapperService = new QuoteDataMapperService();
+
+    // Phase 10.4 - Quote line operations service instance
+    @TestVisible
+    private static QuoteLineOperationsService quoteLineOperationsService = new QuoteLineOperationsService();
+
     //SDT-30089 - start
     public static String specialHandling_Automatic_Reason = 'Automatically flagged by system';
     public static String specialHandling_BackDated_Reason = 'Back-dated service requested';
@@ -919,26 +928,37 @@ public class QuoteProcurementController {
     //STARTING HERE - Utility classes that are utilized to construct the wrapper class
     //Returns the header records configured for the quote for storage in the wrapper class
     public static List<SBQQ__QuoteLine__c> getQuoteProducts(Id quoteId) {
+        // Phase 10.4: Delegate to QuoteLineOperationsService
+        if (USE_QUOTE_LINE_OPERATIONS_SERVICE) {
+            try {
+                return quoteLineOperationsService.getQuoteProducts(quoteId);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in QuoteLineOperationsService.getQuoteProducts: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         List<SBQQ__QuoteLine__c> quoteLines = new List<SBQQ__QuoteLine__c>();
         //SDT 33101 Quote_Only_Copy_of__c added
         //SDT-37527 field add in query
-        quoteLines = [SELECT Id,PricingUnitMethod__c, SBQQ__Quote__c,Vendor__r.Status__c,Vendor_Commit_Date__c ,SBQQ__Quote__r.STP__c, SBQQ__ListPrice__c, SBQQ__UnitCost__c, SBQQ__ProductName__c, SBQQ__ProductFamily__c, SBQQ__ProductCode__c, 
+        quoteLines = [SELECT Id,PricingUnitMethod__c, SBQQ__Quote__c,Vendor__r.Status__c,Vendor_Commit_Date__c ,SBQQ__Quote__r.STP__c, SBQQ__ListPrice__c, SBQQ__UnitCost__c, SBQQ__ProductName__c, SBQQ__ProductFamily__c, SBQQ__ProductCode__c,
                       Vendor__c, Vendor__r.Vendor_Business_Unit__c, Vendor__r.Parent_Vendor_Id__c, Vendor__r.Name, Vendor__r.AccountNumber,
                       Occurrence_Type__c, Schedule_Frequency__c, Frequency_Interval__c, Service_Days__c, SBQQ__Quantity__c, Name,
                       PriceUOM__c, PriceMinQuantity__c, SBQQ__PricingMethod__c, CostModelType__c, Cost_Unit_of_Measure__c, Account__c,
-                      CostMinQuantity__c, MASLibrary__c, MASCompany__c, MASAccount__c, MASCustomerUniqueId__c, MASServiceLine__c, 
+                      CostMinQuantity__c, MASLibrary__c, MASCompany__c, MASAccount__c, MASCustomerUniqueId__c, MASServiceLine__c,
                       MASBox__c, BypassPriceReview__c, BypassMASServiceChange__c, SetupComment__c, DoNotCreateMASTicket__c, DoNotCreateTaskGridTickets__c, Location_Position_Name__c,
                       // Commented 'SetupComment__c' field reference for story SDT-25787 to change the DataType from 'Text(255)' to 'Long Text(1500)' Will uncomment after DataType is changed
                       //MASBox__c, BypassPriceReview__c, BypassMASServiceChange__c, DoNotCreateMASTicket__c, Location_Position_Name__c,
                       SBQQ__RequiredBy__c, toLabel(Equipment_Size__c), toLabel(Duration__c), SBQQ__StartDate__c, SBQQ__EndDate__c, sCode__c, SBQQ__RequiredBy__r.SBQQ__RequiredBy__c,
                       Vendor__r.Contact_Manually_Vendor__c, Vendor__r.Prepayment_Required__c, SBQQ__Quote__r.Case_Type__c, SBQQ__Quote__r.SBQQ__Status__c, CompanyCategoryCode__c,MaterialGrade__c,CompanyCategoryName__c,
-                      SBQQ__Quote__r.SBQQ__Account__r.Parent.AccountNumber, SBQQ__Quote__r.Name, SBQQ__Quote__r.SBQQ__PrimaryContact__r.Name, 
+                      SBQQ__Quote__r.SBQQ__Account__r.Parent.AccountNumber, SBQQ__Quote__r.Name, SBQQ__Quote__r.SBQQ__PrimaryContact__r.Name,
                       SBQQ__Quote__r.SBQQ__PrimaryContact__r.Id, Certificate_of_Destruction__c, Certificate_of_Disposal__c, VCRCode__c, Service_Schedule__c,
                       SBQQ__Number__c, SBQQ__Quote__r.Quote_Only__c, Profile_Number__c, Description_of_Waste__c, SBQQ__Product__c, SBQQ__Product__r.SBQQ__QuantityEditable__c,
                       SLA_Override_Reason__c, SLA_Override_Comment__c,ProcurementErrorMessage__c,BundleProcuredStatus__c, CurrencyIsoCode,
                       SBQQ__Quote__r.SBQQ__Opportunity2__r.Case__r.Recordtype.Name,AAV_Delivery_Override_Comment__c,AAV_Delivery_Override_Reason__c, //SDT-30864
                       AAV_Service_Override_Reason__c,AAV_Service_Day_Override_Comment__c, //SDT-29100
-                      AAV_Requested_AdditionalServicesAccessor__c,AAV_Delivery_Availability__c,AAV_Service_Availability__c,Availability_Flag__c, ////SDT-29399 
+                      AAV_Requested_AdditionalServicesAccessor__c,AAV_Delivery_Availability__c,AAV_Service_Availability__c,Availability_Flag__c, ////SDT-29399
                       AAV_Asset_Availability_API_Errors__c, //SDT - 31583
                       Vendor__r.FacilityCode__c //SDT-29645
                       ,Quote_Only_Copy_of__c,SBQQ__Quote__r.SBQQ__Type__c,CustomerApproval__c//SDT 33101
@@ -946,11 +966,11 @@ public class QuoteProcurementController {
                       SBQQ__Quote__r.SBQQ__Opportunity2__r.Case__r.Is_Haul_Away_Service__c,SBQQ__Quote__r.SBQQ__Opportunity2__r.Case__c //SDT-41473
                       FROM SBQQ__QuoteLine__c
                       WHERE SBQQ__Quote__c =: quoteId AND SBQQ__RequiredBy__c = Null];
-        
+
         system.debug('Quote lines returned: ' + quoteLines.size());
-        
+
         return quoteLines;
-        
+
     }
     //Added for story SDT-21065
     public static List<SBQQ__QuoteLine__c> getQuoteLineMASDetails(Id quoteLineId) {
@@ -1858,7 +1878,17 @@ public class QuoteProcurementController {
   // Added for SDT-20583 - Creating Quote and QuoteLine based on the data selection from Favriotes screen.  
     @AuraEnabled
     public static String addQuoteAndQuoteine(String favroiteId, String caseId, String quoteID, Boolean quoteScreen) {
-        
+        // Phase 10.4: Delegate to QuoteLineOperationsService
+        if (USE_QUOTE_LINE_OPERATIONS_SERVICE) {
+            try {
+                return quoteLineOperationsService.addQuoteAndQuoteLine(favroiteId, caseId, quoteID, quoteScreen);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in QuoteLineOperationsService.addQuoteAndQuoteLine: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         //Double parentLineNumber;
         Decimal parentLineNumber;
         
@@ -3669,7 +3699,17 @@ public class QuoteProcurementController {
 
     @AuraEnabled
     public static String createQuoteLines(Id quoteId, Id productId, Id wasteStream, String equipmentSize) {
+        // Phase 10.4: Delegate to QuoteLineOperationsService
+        if (USE_QUOTE_LINE_OPERATIONS_SERVICE) {
+            try {
+                return quoteLineOperationsService.createQuoteLines(quoteId, productId, wasteStream, equipmentSize);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in QuoteLineOperationsService.createQuoteLines: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
 
+        // Original implementation (fallback)
         String successMessage;
         List<SBQQ__ErrorCondition__c> errorConditions = new List<SBQQ__ErrorCondition__c>();
         Set<Id> actionIds = new Set<Id>();
