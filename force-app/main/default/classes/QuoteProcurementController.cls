@@ -49,6 +49,13 @@ public class QuoteProcurementController {
     @TestVisible
     private static Boolean USE_QUOTE_LINE_OPERATIONS_SERVICE = true;
 
+    // Phase 10.5 - SLA and special handling service feature flags
+    @TestVisible
+    private static Boolean USE_SLA_MANAGEMENT_SERVICE = true;
+
+    @TestVisible
+    private static Boolean USE_SPECIAL_HANDLING_SERVICE = true;
+
     // Service instances
     @TestVisible
     private static QuoteLineValidationService validationService = new QuoteLineValidationService();
@@ -83,6 +90,13 @@ public class QuoteProcurementController {
     // Phase 10.4 - Quote line operations service instance
     @TestVisible
     private static QuoteLineOperationsService quoteLineOperationsService = new QuoteLineOperationsService();
+
+    // Phase 10.5 - SLA and special handling service instances
+    @TestVisible
+    private static SLAManagementService slaManagementService = new SLAManagementService();
+
+    @TestVisible
+    private static SpecialHandlingService specialHandlingService = new SpecialHandlingService();
 
     //SDT-30089 - start
     public static String specialHandling_Automatic_Reason = 'Automatically flagged by system';
@@ -2549,11 +2563,35 @@ public class QuoteProcurementController {
     * **************************************************/
     @AuraEnabled
     public static void addCommentForSLAOverrideFromIntake(String caseId) {
+        // Phase 10.5: Delegate to SLAManagementService
+        if (USE_SLA_MANAGEMENT_SERVICE) {
+            try {
+                slaManagementService.addCommentForSLAOverrideFromIntake(caseId);
+                return;
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in SLAManagementService.addCommentForSLAOverrideFromIntake: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         addCommentForSLAOverride(caseId, Null, Null);
     }
     
     @InvocableMethod(label='Add Comment for SLA Override' description='This action is for creating sla override comment')
     public static void addCommentForSLAOverrideFromMIF(List<InputWrapperForMIFFlow> input) {
+        // Phase 10.5: Delegate to SLAManagementService
+        if (USE_SLA_MANAGEMENT_SERVICE) {
+            try {
+                slaManagementService.addCommentForSLAOverrideFromFlow(input[0].caseId, input[0].slaComment, input[0].slaReason);
+                return;
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in SLAManagementService.addCommentForSLAOverrideFromFlow: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         addCommentForSLAOverride(input[0].caseId, input[0].slaComment, input[0].slaReason);
     }
     
@@ -2573,7 +2611,18 @@ public class QuoteProcurementController {
 	* **************************************************/
     @AuraEnabled
     public static void addCommentForSLAOverride(String caseId, String slaComment, String slaReason) {
-        
+        // Phase 10.5: Delegate to SLAManagementService
+        if (USE_SLA_MANAGEMENT_SERVICE) {
+            try {
+                slaManagementService.addCommentForSLAOverride(caseId, slaComment, slaReason);
+                return;
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in SLAManagementService.addCommentForSLAOverride: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         try {
             String commentBody;
             String trackingNumber;
@@ -2585,9 +2634,9 @@ public class QuoteProcurementController {
                     commentLogTemplateData.put(c.DeveloperName , c);
                 }
                 Comment_Log_Detail__mdt slaOverrideCommentTemplate = commentLogTemplateData.get('SLA_Override');
-                
+
                 Id recordTypeId = Schema.getGlobalDescribe().get('Comment__c').getDescribe().getRecordTypeInfosByDeveloperName().get('Acorn_Ticket_Comment').getRecordTypeId();
-            
+
             //when called from MIF flow
             if(String.isNotEmpty(slaComment) && String.isNotEmpty(slaReason)) {
                 commentBody = slaOverrideCommentTemplate.Comment__c.replaceAll('<Reason__x>', slaReason);
@@ -2598,31 +2647,31 @@ public class QuoteProcurementController {
                     trackingNumber = csList[0].Tracking_Number__c;
                 }
             }
-            
+
             else {
                 //querying the quoteline
-                list<SBQQ__QuoteLine__c> ql = [Select Id, SLA_Override_Reason__c, SLA_Override_Comment__c, sbqq__Quote__r.SBQQ__Opportunity2__r.Case__c, 
+                list<SBQQ__QuoteLine__c> ql = [Select Id, SLA_Override_Reason__c, SLA_Override_Comment__c, sbqq__Quote__r.SBQQ__Opportunity2__r.Case__c,
                                             SBQQ__Quote__r.SBQQ__Opportunity2__r.Case__r.CaseNumber, SBQQ__Quote__r.SBQQ__Opportunity2__r.Case__r.Tracking_Number__c
                                             FROM SBQQ__QuoteLine__c WHERE sbqq__Quote__r.SBQQ__Opportunity2__r.Case__c =: caseId AND SBQQ__Requiredby__c =: null
                                             AND SLA_Override_Reason__c != null limit 1];
                 if(ql.size() > 0) {
                 //Decimal acornUserId = [select Acorn_SUser_ID__c from User where ID =: System.UserInfo.getUserId()].Acorn_SUser_ID__c;
-                
+
                     String overrideReason = ql[0].SLA_Override_Reason__c;
                     String overrideComment = ql[0].SLA_Override_Comment__c;
                     commentBody = slaOverrideCommentTemplate.Comment__c.replaceAll('<Reason__x>', overrideReason);
                     commentBody = commentBody.replaceAll('<Comment__c>', overrideComment);
-                    
+
                     caseNumber = ql[0].SBQQ__Quote__r.SBQQ__Opportunity2__r.Case__r.CaseNumber;
                     if (String.isNotEmpty(ql[0].SBQQ__Quote__r.SBQQ__Opportunity2__r.Case__r.Tracking_Number__c))  {
                         trackingNumber = ql[0].SBQQ__Quote__r.SBQQ__Opportunity2__r.Case__r.Tracking_Number__c;
                     }
-                    
+
                     //insert comment;
-                    
+
                 }
             }
-                
+
                  //creating a Comment__c record
             if(String.isNotBlank(commentBody)) // SDT-48501
 	    {
@@ -2637,11 +2686,11 @@ public class QuoteProcurementController {
 		comment.Type__c = Constant_Util.OBJECT_CASE;
             	comment.Case_Number__c = caseNumber;
             	comment.Acorn_Tracking_Number__c = trackingNumber;
-                
+
                 insert comment;
 	    }
-            
-            
+
+
         }catch(Exception ex){
             //Changes related to SDT-48086
             UTIL_LoggingService.logHandledExceptionWithClass(ex, UserInfo.getOrganizationId(),
@@ -2651,7 +2700,7 @@ public class QuoteProcurementController {
                                                             UTIL_ErrorConstants.ADDCOMMENTFORSLAOVERRIDE_METHODNAME,
                                                             null);
         }
-        
+
     }
 
 	
@@ -5788,9 +5837,20 @@ public class QuoteProcurementController {
      */
 
     public static void updateSpecialHandling(Id quoteId){
+        // Phase 10.5: Delegate to SpecialHandlingService
+        if (USE_SPECIAL_HANDLING_SERVICE) {
+            try {
+                specialHandlingService.updateSpecialHandling(quoteId);
+                return;
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in SpecialHandlingService.updateSpecialHandling: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
 
+        // Original implementation (fallback)
         List<SBQQ__QuoteLine__c> quoteLine = [select id ,Quote_SLA_Date__c,Certificate_of_Destruction__c,Certificate_of_Disposal__c,
-        Gate_Code__c,Service_Start_Time__c,Service_End_Time__c,Restriction_Details__c,SBQQ__Quote__r.Special_Handling__c, SBQQ__Quote__r.Special_Handling_Reason__c, SBQQ__Quote__r.Special_Handling_Reason_Details__c 
+        Gate_Code__c,Service_Start_Time__c,Service_End_Time__c,Restriction_Details__c,SBQQ__Quote__r.Special_Handling__c, SBQQ__Quote__r.Special_Handling_Reason__c, SBQQ__Quote__r.Special_Handling_Reason_Details__c
         from SBQQ__QuoteLine__c where SBQQ__Quote__c =:quoteId and SBQQ__RequiredBy__c = null ];
         SBQQ__Quote__c quoteObj = new SBQQ__Quote__c();
 
@@ -5807,9 +5867,9 @@ public class QuoteProcurementController {
                     break;
                 }
                 else if(updatedQuoteLine.Quote_SLA_Date__c >= system.today() &&
-                    (updatedQuoteLine.Certificate_of_Destruction__c || updatedQuoteLine.Certificate_of_Disposal__c 
-                    || !String.isBlank(updatedQuoteLine.Gate_Code__c) || updatedQuoteLine.Service_Start_Time__c != null 
-                    || updatedQuoteLine.Service_End_Time__c != null 
+                    (updatedQuoteLine.Certificate_of_Destruction__c || updatedQuoteLine.Certificate_of_Disposal__c
+                    || !String.isBlank(updatedQuoteLine.Gate_Code__c) || updatedQuoteLine.Service_Start_Time__c != null
+                    || updatedQuoteLine.Service_End_Time__c != null
                     || !String.isBlank(updatedQuoteLine.Restriction_Details__c)))
                 {
                     quoteObj.Special_Handling__c = true;
@@ -5819,7 +5879,7 @@ public class QuoteProcurementController {
                     break;
                 }
                 else{
-                    if(updatedQuoteLine.SBQQ__Quote__r.Special_Handling_Reason__c == specialHandling_BackDated_Reason 
+                    if(updatedQuoteLine.SBQQ__Quote__r.Special_Handling_Reason__c == specialHandling_BackDated_Reason
                     || updatedQuoteLine.SBQQ__Quote__r.Special_Handling_Reason__c == specialHandling_Automatic_Reason)
                     {
                         quoteObj.Special_Handling__c = false;
@@ -5830,7 +5890,7 @@ public class QuoteProcurementController {
                 }
             }
         }
-        
+
         if(quoteObj!=null){
             quoteObj.Id = quoteId;
             update quoteObj;
