@@ -408,4 +408,289 @@ public class DeliveryOrchestrationService {
             return ex.getMessage();
         }
     }
+
+    // ========================================================================
+    // Phase 10.3: Quote Line Helper Methods
+    // ========================================================================
+
+    /**
+     * @description Validate and create/update Removal quote line for TEMP duration services
+     * @param parentQLine Parent quote line
+     * @param endDate End date string
+     * @return Result message ('SUCCESS' or error message)
+     */
+    public String validateRemoval(SBQQ__QuoteLine__c parentQLine, String endDate) {
+        String result = 'SUCCESS';
+        try {
+            SBQQ__QuoteLine__c removalQLine = getQLine(parentQLine.Id, 'Removal');
+
+            if (removalQLine == null || removalQLine.Id == null) {
+                // Create new removal quote line
+                removalQLine = new SBQQ__QuoteLine__c();
+                removalQLine = assignParentQLineFields(parentQLine);
+                removalQLine.SBQQ__Product__c = getProductId('Removal', parentQLine.SBQQ__Product__c);
+                removalQLine.SBQQ__Quantity__c = 1;
+
+                if (removalQLine.SBQQ__Product__c != null) {
+                    SBQQ__ProductOption__c removalProductOption = getProductOptionId(
+                        parentQLine.SBQQ__Product__c,
+                        removalQLine.SBQQ__Product__c
+                    );
+
+                    if (removalProductOption != null && removalProductOption.Id != null) {
+                        removalQLine.SBQQ__ProductOption__c = removalProductOption.Id;
+                        removalQLine.Occurrence_Type__c = removalProductOption.Occurrence_Type__c;
+                        removalQLine.PriceUOM__c = removalProductOption.PriceUOM__c;
+                        removalQLine.Cost_Unit_of_Measure__c = removalProductOption.Cost_Unit_of_Measure__c;
+                        removalQLine.CostModelType__c = removalProductOption.CostModelType__c;
+                        removalQLine = clearScheduleValues(removalQLine);
+                    }
+                }
+
+                if (!String.isEmpty(endDate)) {
+                    Date removalEndDate = Date.parse(endDate);
+                    RemovalQuoteLineHandler.setDatesForRemovalQL(removalQLine, removalEndDate);
+                }
+
+                removalQLine.SBQQ__Number__c = getMaxQuoteLineNumber(parentQLine.SBQQ__Quote__c);
+
+                if (parentQLine.SBQQ__Quote__r.SBQQ__Type__c == Constant_Util.QUOTE) {
+                    RemovalQuoteLineHandler.checkIfBundleQLHasEnddateBeforeInsert(removalQLine);
+                }
+
+                insert removalQLine;
+            } else {
+                // Update existing removal quote line
+                SBQQ__QuoteLine__c updatedRemovalQLine = assignParentQLineFields(parentQLine);
+                updatedRemovalQLine.Id = removalQLine.Id;
+
+                if (!String.isEmpty(endDate)) {
+                    Date removalDate = Date.parse(endDate);
+                    RemovalQuoteLineHandler.setDatesForRemovalQL(updatedRemovalQLine, removalDate);
+                }
+
+                updatedRemovalQLine.Occurrence_Type__c = removalQLine.Occurrence_Type__c;
+                updatedRemovalQLine = clearScheduleValues(updatedRemovalQLine);
+                update updatedRemovalQLine;
+            }
+        } catch (Exception ex) {
+            result = ex.getMessage();
+        }
+        return result;
+    }
+
+    /**
+     * @description Validate and create/update Haul quote line for TEMP duration Rolloff products
+     * @param parentQLine Parent quote line
+     * @param endDate End date string
+     * @return Result message ('SUCCESS' or error message)
+     */
+    public String validateHaul(SBQQ__QuoteLine__c parentQLine, String endDate) {
+        String result = 'SUCCESS';
+        try {
+            SBQQ__QuoteLine__c haulQLine = getQLine(parentQLine.Id, 'Haul');
+
+            if (haulQLine == null || haulQLine.Id == null) {
+                // Create new haul quote line
+                haulQLine = new SBQQ__QuoteLine__c();
+                haulQLine = assignParentQLineFields(parentQLine);
+                haulQLine.SBQQ__Product__c = getProductId('Haul', parentQLine.SBQQ__Product__c);
+                haulQLine.SBQQ__Quantity__c = 1;
+
+                if (haulQLine.SBQQ__Product__c != null) {
+                    SBQQ__ProductOption__c haulProductOption = getProductOptionId(
+                        parentQLine.SBQQ__Product__c,
+                        haulQLine.SBQQ__Product__c
+                    );
+
+                    if (haulProductOption != null && haulProductOption.Id != null) {
+                        haulQLine.SBQQ__ProductOption__c = haulProductOption.Id;
+                        haulQLine.Occurrence_Type__c = haulProductOption.Occurrence_Type__c;
+                        haulQLine.PriceUOM__c = haulProductOption.PriceUOM__c;
+                        haulQLine.Cost_Unit_of_Measure__c = haulProductOption.Cost_Unit_of_Measure__c;
+                        haulQLine.CostModelType__c = haulProductOption.CostModelType__c;
+                        haulQLine = clearScheduleValues(haulQLine);
+                    }
+                }
+
+                if (!String.isEmpty(endDate)) {
+                    Date haulEndDate = Date.parse(endDate);
+                    RemovalQuoteLineHandler.setDatesForRemovalQL(haulQLine, haulEndDate);
+                }
+
+                haulQLine.SBQQ__Number__c = getMaxQuoteLineNumber(parentQLine.SBQQ__Quote__c);
+                insert haulQLine;
+            } else {
+                // Update existing haul quote line
+                SBQQ__QuoteLine__c updatedHaulQLine = assignParentQLineFields(parentQLine);
+                updatedHaulQLine.Id = haulQLine.Id;
+
+                if (!String.isEmpty(endDate)) {
+                    Date haulDate = Date.parse(endDate);
+                    RemovalQuoteLineHandler.setDatesForRemovalQL(updatedHaulQLine, haulDate);
+                }
+
+                updatedHaulQLine.Occurrence_Type__c = haulQLine.Occurrence_Type__c;
+                updatedHaulQLine = clearScheduleValues(updatedHaulQLine);
+                update updatedHaulQLine;
+            }
+        } catch (Exception ex) {
+            result = ex.getMessage();
+        }
+        return result;
+    }
+
+    /**
+     * @description Copy parent quote line fields to new child quote line
+     * @param parentQLine Parent quote line
+     * @return Child quote line with inherited fields
+     */
+    public SBQQ__QuoteLine__c assignParentQLineFields(SBQQ__QuoteLine__c parentQLine) {
+        SBQQ__QuoteLine__c childQLine = new SBQQ__QuoteLine__c(
+            SBQQ__Quote__c = parentQLine.SBQQ__Quote__c,
+            SBQQ__RequiredBy__c = parentQLine.Id,
+            Account__c = parentQLine.Account__c,
+            SBQQ__StartDate__c = parentQLine.SBQQ__StartDate__c,
+            SBQQ__EndDate__c = parentQLine.SBQQ__EndDate__c,
+            Exception_Type__c = parentQLine.Exception_Type__c,
+            Exception_Comments__c = parentQLine.Exception_Comments__c,
+            Exception_Reason__c = parentQLine.Exception_Reason__c,
+            Equipment_Size__c = parentQLine.Equipment_Size__c,
+            Occurrence_Type__c = parentQLine.Occurrence_Type__c,
+            Schedule_Frequency__c = parentQLine.Schedule_Frequency__c,
+            Frequency_Interval__c = parentQLine.Frequency_Interval__c,
+            Day_of_Month__c = parentQLine.Day_of_Month__c,
+            Service_Days__c = parentQLine.Service_Days__c,
+            Duration__c = parentQLine.Duration__c,
+            Month_Relative_Interval__c = parentQLine.Month_Relative_Interval__c,
+            Month_Relative__c = parentQLine.Month_Relative__c
+        );
+        return childQLine;
+    }
+
+    /**
+     * @description Clear schedule-related fields for On-Call products
+     * @param qLine Quote line
+     * @return Quote line with cleared schedule values
+     */
+    private SBQQ__QuoteLine__c clearScheduleValues(SBQQ__QuoteLine__c qLine) {
+        qLine.Schedule_Frequency__c = null;
+        qLine.Frequency_Interval__c = null;
+        qLine.Day_of_Month__c = null;
+        qLine.Service_Days__c = null;
+        qLine.Month_Relative_Interval__c = null;
+        qLine.Month_Relative__c = null;
+        return qLine;
+    }
+
+    /**
+     * @description Query child quote line by product name
+     * @param qLineId Parent quote line ID
+     * @param prdName Product name
+     * @return Child quote line or null
+     */
+    public SBQQ__QuoteLine__c getQLine(String qLineId, String prdName) {
+        List<SBQQ__QuoteLine__c> qLineList = [
+            SELECT Id, SBQQ__Quote__c, SBQQ__RequiredBy__c, Account__c,
+                   SBQQ__StartDate__c, SBQQ__EndDate__c, Exception_Effective_Date__c,
+                   Exceptions_Effective_Date__c, Exception_Type__c, Exception_Comments__c,
+                   Exception_Reason__c, Equipment_Size__c, Occurrence_Type__c,
+                   Schedule_Frequency__c, Frequency_Interval__c, Day_of_Month__c,
+                   Service_Days__c, Duration__c, Month_Relative_Interval__c, Month_Relative__c
+            FROM SBQQ__QuoteLine__c
+            WHERE SBQQ__RequiredBy__c = :qLineId
+            AND SBQQ__ProductName__c = :prdName
+        ];
+
+        if (qLineList.size() > 0) {
+            return qLineList[0];
+        }
+        return null;
+    }
+
+    /**
+     * @description Query parent quote line by ID
+     * @param parentQLineId Parent quote line ID
+     * @return Parent quote line or null
+     */
+    public SBQQ__QuoteLine__c getParentQline(String parentQLineId) {
+        List<SBQQ__QuoteLine__c> pQLineList = [
+            SELECT Id, SBQQ__Quote__c, Account__c, SBQQ__StartDate__c,
+                   SBQQ__EndDate__c, Exception_Effective_Date__c, Exceptions_Effective_Date__c,
+                   Exception_Type__c, Exception_Comments__c, Exception_Reason__c,
+                   Equipment_Size__c, SBQQ__Quantity__c, Occurrence_Type__c, Schedule_Frequency__c,
+                   Frequency_Interval__c, Day_of_Month__c, Service_Days__c, SBQQ__Product__c,
+                   SBQQ__ProductOption__c, Duration__c, SBQQ__ProductFamily__c,
+                   SBQQ__Product__r.ProductCode, Month_Relative_Interval__c, Month_Relative__c,
+                   SBQQ__Quote__r.SBQQ__Type__c
+            FROM SBQQ__QuoteLine__c
+            WHERE Id = :parentQLineId
+        ];
+
+        if (pQLineList.size() > 0) {
+            return pQLineList[0];
+        }
+        return null;
+    }
+
+    /**
+     * @description Get product ID by name from product options
+     * @param productName Product name (e.g., 'Removal', 'Haul')
+     * @param parentQuotelineProductId Parent quote line product ID
+     * @return Product ID or null
+     */
+    public Id getProductId(String productName, String parentQuotelineProductId) {
+        List<SBQQ__ProductOption__c> pOptionList = [
+            SELECT SBQQ__OptionalSKU__c
+            FROM SBQQ__ProductOption__c
+            WHERE SBQQ__ConfiguredSKU__c = :parentQuotelineProductId
+            AND SBQQ__OptionalSKU__r.Name = :productName
+        ];
+
+        if (pOptionList.size() == 0) {
+            return null;
+        }
+        return pOptionList[0].SBQQ__OptionalSKU__c;
+    }
+
+    /**
+     * @description Get product option record for parent-child product relationship
+     * @param parentQLineProductId Parent quote line product ID
+     * @param childProductId Child product ID
+     * @return Product option record or empty record
+     */
+    public SBQQ__ProductOption__c getProductOptionId(String parentQLineProductId, String childProductId) {
+        SBQQ__ProductOption__c productOption = new SBQQ__ProductOption__c();
+
+        List<SBQQ__ProductOption__c> pOptionList = [
+            SELECT Id, SBQQ__ConfiguredSKU__c, SBQQ__OptionalSKU__c,
+                   Occurrence_Type__c, Cost_Unit_of_Measure__c, CostModelType__c, PriceUOM__c
+            FROM SBQQ__ProductOption__c
+            WHERE SBQQ__ConfiguredSKU__c = :parentQLineProductId
+            AND SBQQ__OptionalSKU__c = :childProductId
+        ];
+
+        if (pOptionList.size() > 0) {
+            productOption = pOptionList[0];
+        }
+        return productOption;
+    }
+
+    /**
+     * @description Get next available quote line number for a quote
+     * @param quoteId Quote ID
+     * @return Next quote line number (max + 1)
+     */
+    public Decimal getMaxQuoteLineNumber(String quoteId) {
+        List<SBQQ__QuoteLine__c> maxQL = [
+            SELECT SBQQ__Number__c
+            FROM SBQQ__QuoteLine__c
+            WHERE SBQQ__Quote__c = :quoteId
+            ORDER BY SBQQ__Number__c DESC
+            LIMIT 1
+        ];
+
+        Decimal quoteLineNumber = (maxQL.size() > 0) ? maxQL[0].SBQQ__Number__c + 1 : 1;
+        return quoteLineNumber;
+    }
 }

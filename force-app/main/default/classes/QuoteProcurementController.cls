@@ -3896,7 +3896,17 @@ public class QuoteProcurementController {
     }
 
     public static Decimal getMaxQuoteLineNumber(String quoteId) {
+        // Phase 10.3: Delegate to DeliveryOrchestrationService
+        if (USE_DELIVERY_ORCHESTRATION_SERVICE) {
+            try {
+                return deliveryOrchestrationService.getMaxQuoteLineNumber(quoteId);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in DeliveryOrchestrationService.getMaxQuoteLineNumber: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
 
+        // Original implementation (fallback)
         List<SBQQ__QuoteLine__c> maxQL = [SELECT SBQQ__Number__c
                                           FROM SBQQ__QuoteLine__c
                                           WHERE SBQQ__Quote__c =: quoteID
@@ -3959,12 +3969,22 @@ public class QuoteProcurementController {
 
     // Changes for SDT-31623
     public static SBQQ__ProductOption__c getProductOptionId(string parentQLineProdutId, string childProductId){
-        
+        // Phase 10.3: Delegate to DeliveryOrchestrationService
+        if (USE_DELIVERY_ORCHESTRATION_SERVICE) {
+            try {
+                return deliveryOrchestrationService.getProductOptionId(parentQLineProdutId, childProductId);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in DeliveryOrchestrationService.getProductOptionId: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         SBQQ__ProductOption__c productOption = new SBQQ__ProductOption__c();
-        List<SBQQ__ProductOption__c> pOptionList = [SELECT id, SBQQ__ConfiguredSKU__c, SBQQ__ConfiguredSKU__r.Name, SBQQ__OptionalSKU__c, 
+        List<SBQQ__ProductOption__c> pOptionList = [SELECT id, SBQQ__ConfiguredSKU__c, SBQQ__ConfiguredSKU__r.Name, SBQQ__OptionalSKU__c,
                                                     SBQQ__OptionalSKU__r.Name, Occurrence_Type__c , Cost_Unit_of_Measure__c, CostModelType__c, PriceUOM__c // Changes for SDT-32028
-                                                    FROM SBQQ__ProductOption__c 
-                                                    WHERE SBQQ__ConfiguredSKU__c = :parentQLineProdutId AND 
+                                                    FROM SBQQ__ProductOption__c
+                                                    WHERE SBQQ__ConfiguredSKU__c = :parentQLineProdutId AND
                                                     SBQQ__OptionalSKU__c=:childProductId];
         if(pOptionList.size()>0){
             productOption = pOptionList[0];
@@ -3972,24 +3992,46 @@ public class QuoteProcurementController {
         return productOption;
     }
     public static id getProductId(string productName, string parentQuotelineProductId){
+        // Phase 10.3: Delegate to DeliveryOrchestrationService
+        if (USE_DELIVERY_ORCHESTRATION_SERVICE) {
+            try {
+                return deliveryOrchestrationService.getProductId(productName, parentQuotelineProductId);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in DeliveryOrchestrationService.getProductId: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         List<SBQQ__ProductOption__c> pOptionList = new List<SBQQ__ProductOption__c>();
         pOptionList = [SELECT SBQQ__OptionalSKU__c
-                                                    FROM SBQQ__ProductOption__c 
-                                                    WHERE SBQQ__ConfiguredSKU__c = :parentQuotelineProductId 
+                                                    FROM SBQQ__ProductOption__c
+                                                    WHERE SBQQ__ConfiguredSKU__c = :parentQuotelineProductId
                                                     AND SBQQ__OptionalSKU__r.Name=:productName];
-        
+
         if(pOptionList.size()==0){
             return null;
         }
         return pOptionList[0].SBQQ__OptionalSKU__c;
     }
     public static SBQQ__QuoteLine__c assignParentQLineFields(SBQQ__QuoteLine__c parentQLine){
+        // Phase 10.3: Delegate to DeliveryOrchestrationService
+        if (USE_DELIVERY_ORCHESTRATION_SERVICE) {
+            try {
+                return deliveryOrchestrationService.assignParentQLineFields(parentQLine);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in DeliveryOrchestrationService.assignParentQLineFields: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         SBQQ__QuoteLine__c childQLine = new SBQQ__QuoteLine__c(
         	SBQQ__Quote__c = parentQLine.SBQQ__Quote__c,
             SBQQ__RequiredBy__c = parentQLine.Id,
             Account__c = parentQLine.Account__c,
             SBQQ__StartDate__c = parentQLine.SBQQ__StartDate__c,
-            SBQQ__EndDate__c = parentQLine.SBQQ__EndDate__c, 
+            SBQQ__EndDate__c = parentQLine.SBQQ__EndDate__c,
             //SDT 34351 Exception_Effective_Date__c = parentQLine.Exception_Effective_Date__c,
             //sdhikale TCS SDT-29806
             //SDT 34351 Exceptions_Effective_Date__c = parentQLine.Exceptions_Effective_Date__c,
@@ -4008,11 +4050,22 @@ public class QuoteProcurementController {
             Month_Relative__c = parentQLine.Month_Relative__c
             //SDT-38285 - End
         );
-        
-            //End SDT-29615 
+
+            //End SDT-29615
         return childQLine;
     }
     public static string validateHaul(SBQQ__QuoteLine__c parentQLine, string endDate){
+        // Phase 10.3: Delegate to DeliveryOrchestrationService
+        if (USE_DELIVERY_ORCHESTRATION_SERVICE) {
+            try {
+                return deliveryOrchestrationService.validateHaul(parentQLine, endDate);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in DeliveryOrchestrationService.validateHaul: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         system.debug('parentQLine==>1679'+parentQLine);
         string result = 'SUCCESS';
         try{
@@ -4038,7 +4091,7 @@ public class QuoteProcurementController {
                         haulQLine.SBQQ__ProductOption__c= haulProductOption.Id;
                     }
                 }
-                
+
                 haulQLine.SBQQ__Number__c = getMaxQuoteLineNumber(parentQLine.SBQQ__Quote__c);
                 insert haulQLine;
                 // haulQLine = [SELECT id, SBQQ__EndDate__c FROM SBQQ__QuoteLine__c WHERE id=:haulQLine.id];
@@ -4077,6 +4130,17 @@ public class QuoteProcurementController {
     }
 
     public static string validateRemoval(SBQQ__QuoteLine__c parentQLine, string endDate){
+        // Phase 10.3: Delegate to DeliveryOrchestrationService
+        if (USE_DELIVERY_ORCHESTRATION_SERVICE) {
+            try {
+                return deliveryOrchestrationService.validateRemoval(parentQLine, endDate);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in DeliveryOrchestrationService.validateRemoval: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         string result = 'SUCCESS';
         try{
             SBQQ__QuoteLine__c removalQLine = getQLine(parentQLine.Id,'Removal');
@@ -4114,22 +4178,22 @@ public class QuoteProcurementController {
 					RemovalQuoteLineHandler.setDatesForRemovalQL(removalQLine,removalenddate);
                 }
                 removalQLine.SBQQ__Number__c = getMaxQuoteLineNumber(parentQLine.SBQQ__Quote__c);
-                
+
 				//SDT 32952
-				//Removal Quoteline will only be inserted if bundle has end date 
+				//Removal Quoteline will only be inserted if bundle has end date
 				//insert removalQLine;
 				//TCS-pkulkarn-SDT-41184-Added if condition to check for Quote Type-Removal quote line not to be added for Add/Change quotes for TEMP Duration on Commercial containers
                 if(parentQLine.SBQQ__Quote__r.SBQQ__Type__c == Constant_Util.QUOTE)
                 {
                     RemovalQuoteLineHandler.checkIfBundleQLHasEnddateBeforeInsert(removalQLine);
                 }
-                
+
                 // removalQLine = [SELECT id, SBQQ__EndDate__c FROM SBQQ__QuoteLine__c WHERE id=:removalQLine.id];
                 // if(removalQLine.SBQQ__EndDate__c==null){
                 //     removalQLine.SBQQ__EndDate__c = removalenddate;
                 //     update removalQLine;
                 // }
-                
+
             }
             else
             {
@@ -4141,8 +4205,8 @@ public class QuoteProcurementController {
 					date removalDate = date.parse(endDate);
 					RemovalQuoteLineHandler.setDatesForRemovalQL(updatedremovalQLine,removalDate);
 				}
-               
-	       
+
+
 	       // Overriding Occurrence_Type__c Value from Removal QL
                 updatedremovalQLine.Occurrence_Type__c=removalQLine.Occurrence_Type__c;
                  //Removing Other Schedule Values
@@ -4158,15 +4222,37 @@ public class QuoteProcurementController {
         return result;
     }
     public static SBQQ__QuoteLine__c getQLine(string qLineId, string prdName){
+        // Phase 10.3: Delegate to DeliveryOrchestrationService
+        if (USE_DELIVERY_ORCHESTRATION_SERVICE) {
+            try {
+                return deliveryOrchestrationService.getQLine(qLineId, prdName);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in DeliveryOrchestrationService.getQLine: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         //SDT-38285 Added Month_Relative_Interval__c and Month_Relative__c
-        List<SBQQ__QuoteLine__c> qLineList = [SELECT id, SBQQ__Quote__c, SBQQ__RequiredBy__c, Account__c, SBQQ__StartDate__c, SBQQ__EndDate__c, Exception_Effective_Date__c, Exceptions_Effective_Date__c,  Exception_Type__c, Exception_Comments__c, Exception_Reason__c, Equipment_Size__c, Occurrence_Type__c, Schedule_Frequency__c, Frequency_Interval__c, Day_of_Month__c, Service_Days__c, Duration__c, Month_Relative_Interval__c, Month_Relative__c FROM SBQQ__QuoteLine__c WHERE SBQQ__RequiredBy__c=:qLineId 
+        List<SBQQ__QuoteLine__c> qLineList = [SELECT id, SBQQ__Quote__c, SBQQ__RequiredBy__c, Account__c, SBQQ__StartDate__c, SBQQ__EndDate__c, Exception_Effective_Date__c, Exceptions_Effective_Date__c,  Exception_Type__c, Exception_Comments__c, Exception_Reason__c, Equipment_Size__c, Occurrence_Type__c, Schedule_Frequency__c, Frequency_Interval__c, Day_of_Month__c, Service_Days__c, Duration__c, Month_Relative_Interval__c, Month_Relative__c FROM SBQQ__QuoteLine__c WHERE SBQQ__RequiredBy__c=:qLineId
                                              AND SBQQ__ProductName__c =:prdName];
         if(qLineList.size()>0){
-         	return qLineList[0];   
+         	return qLineList[0];
         }
         return null;
     }
     public static SBQQ__QuoteLine__c getParentQline(string parentQLineId){
+        // Phase 10.3: Delegate to DeliveryOrchestrationService
+        if (USE_DELIVERY_ORCHESTRATION_SERVICE) {
+            try {
+                return deliveryOrchestrationService.getParentQline(parentQLineId);
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.ERROR, 'Error in DeliveryOrchestrationService.getParentQline: ' + ex.getMessage());
+                // Fallback to old implementation
+            }
+        }
+
+        // Original implementation (fallback)
         //SDt-38285 Added Month_Relative_Interval__c and Month_Relative__c
         //TCS-pkulkarn-SDT-41184-Added SBQQ__Quote__r.SBQQ__Type__c to the SOQL
         List<SBQQ__QuoteLine__c> pQLineList = [SELECT id, SBQQ__Quote__c, Account__c, SBQQ__StartDate__c, SBQQ__EndDate__c, Exception_Effective_Date__c, Exceptions_Effective_Date__c, Exception_Type__c,
