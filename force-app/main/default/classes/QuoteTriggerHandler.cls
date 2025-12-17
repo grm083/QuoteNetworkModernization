@@ -38,7 +38,13 @@ public class QuoteTriggerHandler {
     
     public static void onAfterUpdate(List<SBQQ__Quote__c > QuoteList, Map<Id,SBQQ__Quote__c> oldMap, Map<Id,SBQQ__Quote__c> newMap){
         System.debug('In SBQQ__Quote__c afterupdate --- ');
-	
+
+		// Phase 9: Quote Lifecycle Processing
+        // Replaces Quote_Status_Change_Flow logic with service-oriented architecture
+        if(RecurrsiveTriggerHandler.getRunTimes() < 1) {
+            processQuoteLifecycleChanges(QuoteList, oldMap, newMap);
+        }
+
 		//SDT-31298 - START
         
         //if(System.Label.Step_By_Step_Switch == 'On'){
@@ -139,7 +145,84 @@ public class QuoteTriggerHandler {
          }
 
         //SDT-41538
-        
+
         RecurrsiveTriggerHandler.setRunTimes();
+    }
+
+    /**
+     * @description Process quote lifecycle changes using service architecture
+     * Phase 9: Replaces Quote_Status_Change_Flow (127 elements)
+     * Handles: Status changes, assignments, priority, next action timing
+     * @param QuoteList List of updated quotes
+     * @param oldMap Old quote values
+     * @param newMap New quote values
+     */
+    private static void processQuoteLifecycleChanges(
+        List<SBQQ__Quote__c> QuoteList,
+        Map<Id, SBQQ__Quote__c> oldMap,
+        Map<Id, SBQQ__Quote__c> newMap
+    ) {
+        // Initialize monitoring
+        QuoteLifecycleMonitoringService monitor = QuoteLifecycleMonitoringService.getInstance();
+
+        try {
+            QuoteLifecycleOrchestrator orchestrator = new QuoteLifecycleOrchestrator();
+
+            for (SBQQ__Quote__c quote : QuoteList) {
+                SBQQ__Quote__c oldQuote = oldMap.get(quote.Id);
+
+                // Detect change type for monitoring
+                QuoteChangeDetectorService changeDetector = new QuoteChangeDetectorService();
+                QuoteChangeDetectorService.ChangeDetectionResult changes =
+                    changeDetector.detectChanges(quote, oldQuote);
+                String changeType = changeDetector.getPrimaryChangeType(changes);
+
+                // Start monitoring
+                String metricId = monitor.startProcessing(quote.Id, changeType);
+
+                // Process quote changes
+                QuoteLifecycleOrchestrator.ProcessingResult result =
+                    orchestrator.processQuoteChange(quote, oldQuote);
+
+                // End monitoring
+                monitor.endProcessing(metricId, result.success, result.errors, result.warnings);
+
+                // Log any processing errors
+                if (!result.success && !result.errors.isEmpty()) {
+                    String errorMessage = 'Quote lifecycle processing failed for Quote ' +
+                                        quote.Id + ': ' + String.join(result.errors, '; ');
+                    System.debug(LoggingLevel.ERROR, errorMessage);
+                    UTIL_LoggingService.logError(
+                        'QuoteTriggerHandler',
+                        'processQuoteLifecycleChanges',
+                        errorMessage
+                    );
+                }
+
+                // Log warnings if any
+                if (!result.warnings.isEmpty()) {
+                    String warningMessage = 'Quote lifecycle warnings for Quote ' +
+                                          quote.Id + ': ' + String.join(result.warnings, '; ');
+                    System.debug(LoggingLevel.WARN, warningMessage);
+                }
+            }
+
+        } catch (Exception ex) {
+            UTIL_LoggingService.logHandledExceptionWithClass(
+                ex,
+                UserInfo.getOrganizationId(),
+                UTIL_ErrorConstants.CONFIRM_CONFIGURATION_ACTION,
+                System.LoggingLevel.Error,
+                UTIL_ErrorConstants.QUOTETRIGGERHANDLER_CLASSNAME,
+                'processQuoteLifecycleChanges',
+                UTIL_ErrorConstants.QUOTETRIGGER_TRIGGERNAME
+            );
+
+            // Don't throw - allow other trigger logic to continue
+            System.debug(LoggingLevel.ERROR, 'Quote lifecycle orchestrator failed: ' + ex.getMessage());
+        } finally {
+            // Flush metrics and send alerts if needed
+            monitor.flushMetrics();
+        }
     }
 }

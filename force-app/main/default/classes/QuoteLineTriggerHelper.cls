@@ -375,12 +375,17 @@ public class QuoteLineTriggerHelper
 	* @return            NA
 	*/ 
     
+    /**
+     * @description Update MAS details on quote lines
+     * Refactored to use DataAggregationService (Phase 5) for MAS lookup
+     * Eliminates duplicate facility->business unit fallback logic
+     * @param oldQuoteLineMap Old quote line map
+     * @param sqlID Set of quote line IDs to process
+     */
     public static void updateMASDetailsToQuoteLines(Map<Id,SBQQ__QuoteLine__c> oldQuoteLineMap,Set<Id> sqlID){
         List<SBQQ__QuoteLine__c> qLToUpdate = new List<SBQQ__QuoteLine__c>();
         string FacilityId;
-        //string FacilityName;
         string SiteId;
-        //string SiteName;
         boolean newServiceCase;
         string lineOfBusiness;
 
@@ -388,17 +393,25 @@ public class QuoteLineTriggerHelper
         String costSource ;
         boolean byPassReviewFlag ;
         string businessUnit;
+
+        // Initialize Phase 5 DataAggregationService
+        DataAggregationService dataAggregationService = new DataAggregationService();
+
         //Fetch All quotelines
         List<SBQQ__QuoteLine__c> quoteLineList = [SELECT Id, Vendor__r.Vendor_Business_Unit__c,Vendor__r.FacilityCode__c,Vendor__r.Parent_Vendor_ID__c, MASLibrary__c, MASCompany__c, BypassPriceReview__c, SBQQ__RequiredBy__c, SBQQ__Quote__r.Name, Name,
                                                  (SELECT id, AAV_APIRequestOutput__c from Asset_Availabilities__r),SBQQ__Product__r.Family,
                                                  SBQQ__Quote__r.SBQQ__Opportunity2__r.Case__r.RecordType.Name,
-                                                 Pricing_Request__c,Pricing_Request__r.Facility_Id__c, Pricing_Request__r.Site_Id__c           
-                                                 FROM SBQQ__QuoteLine__c WHERE Id IN :sqlId OR 
-                                                 SBQQ__RequiredBy__c IN :sqlID  OR 
+                                                 Pricing_Request__c,Pricing_Request__r.Facility_Id__c, Pricing_Request__r.Site_Id__c
+                                                 FROM SBQQ__QuoteLine__c WHERE Id IN :sqlId OR
+                                                 SBQQ__RequiredBy__c IN :sqlID  OR
                                                  SBQQ__RequiredBy__r.SBQQ__RequiredBy__c IN :sqlID];
-        
+
+        // Find parent quote line to get context for MAS lookup
+        Id parentQuoteLineId = null;
         for(SBQQ__QuoteLine__c pQL : quoteLineList){
             if(pQL.SBQQ__RequiredBy__c == null){
+                parentQuoteLineId = pQL.Id;
+
                 if(pQL.SBQQ__Quote__r.SBQQ__Opportunity2__r.Case__r.RecordType.Name == Constant_Util.New_Service_Case){
                     newServiceCase = true;
                 }
@@ -408,6 +421,7 @@ public class QuoteLineTriggerHelper
                 else if(pQL.SBQQ__Product__r.Family == Constant_Util.COMMERCIAL){
                     lineOfBusiness = 'C';
                 }
+
                 //Availablity information to set bypass value
                  for(AAV_Asset_Availability__c availabilityOutput : pQL.Asset_Availabilities__r){
                      if(availabilityOutput!=null){
@@ -416,21 +430,20 @@ public class QuoteLineTriggerHelper
                              AvailabilityAPIJsonDeserialize.cls_suppliers supplier = availabilityData.data.suppliers[0];
                              if(supplier!=null){
                                  aav_zoneType = supplier.contractType;
-                                 costSource = supplier.availabilitySource; 
+                                 costSource = supplier.availabilitySource;
                              }
                          }
                      }
                  }
+
                 if(pQL.Pricing_Request__c != null && pQL.Pricing_Request__r.Facility_Id__c != null
                   && oldQuoteLineMap.get(pQL.Id).Vendor__c == null){
-                    
+
                     FacilityId = pQL.Pricing_Request__r.Facility_Id__c;
-                    //FacilityName = pQL.Pricing_Request__r.Facility_Name__c;
                     SiteId = pQL.Pricing_Request__r.Site_Id__c;
-                    //SiteName = pQL.Pricing_Request__r.Site_Name__c;
                 }
                 else if(pQL.Vendor__r.FacilityCode__c != null){
-                    
+
                     FacilityId = pQL.Vendor__r.FacilityCode__c;
                 }
 
@@ -440,43 +453,80 @@ public class QuoteLineTriggerHelper
                 }
             }
         }
-       
-        //Fetch market area.
-        //SDT-39072 - check condition for null facility ID
-        //List<AggregateResult> masSetupDetail = new List<AggregateResult>();
+
+        // Use Phase 5 DataAggregationService to get MAS details
+        // This replaces the duplicate facility->business unit fallback logic (lines 447-468)
         List<MAS_Setup_Detail__c> masSetupDetail = new List<MAS_Setup_Detail__c>();
-        if(FacilityId != null){
-        masSetupDetail = [SELECT Id, Business_Unit_Number__c, MAS_Line_of_Business__c,MAS_Library__c, MAS_Company_Code__c,Facility_Id__c, Facility_Name__c, Site_Id__c, Site_Name__c , Bypass_Price_Review__c
-                                                    FROM MAS_Setup_Detail__c where 
-                                                    (Facility_Id__c =:FacilityId and
-                                                    Site_Id__c=:SiteId and
-                                                    MAS_Line_of_Business__c=:lineOfBusiness and
-                                                    Valid_For_New_Service__c =:newServiceCase)
-                                                    or
-                                                    (Facility_Id__c =:FacilityId and 
-                                                    Valid_For_New_Service__c =:newServiceCase and 
-                                                    MAS_Line_of_Business__c =:lineOfBusiness)  ];
+
+        if (parentQuoteLineId != null) {
+            try {
+                // Get unique MAS details using the service
+                List<AggregateResult> masAggregates = dataAggregationService.getUniqueMASDetails(parentQuoteLineId);
+
+                // Convert aggregate results to MAS_Setup_Detail__c records for compatibility
+                if (masAggregates != null && !masAggregates.isEmpty()) {
+                    // Query the actual records based on the aggregate results
+                    String masLibrary = (String) masAggregates[0].get('MAS_Library__c');
+                    String masCompany = (String) masAggregates[0].get('MAS_Company_Code__c');
+
+                    if (masLibrary != null && masCompany != null) {
+                        masSetupDetail = [
+                            SELECT Id, Business_Unit_Number__c, MAS_Line_of_Business__c,
+                                   MAS_Library__c, MAS_Company_Code__c, Facility_Id__c,
+                                   Facility_Name__c, Site_Id__c, Site_Name__c, Bypass_Price_Review__c
+                            FROM MAS_Setup_Detail__c
+                            WHERE MAS_Library__c = :masLibrary
+                            AND MAS_Company_Code__c = :masCompany
+                            LIMIT 1
+                        ];
+                    }
+                }
+            } catch (Exception ex) {
+                System.debug(LoggingLevel.WARN,
+                    'DataAggregationService failed, falling back to original logic: ' + ex.getMessage());
+
+                // Fallback to original logic if service call fails (SDT-39072)
+                if(FacilityId != null){
+                    masSetupDetail = [
+                        SELECT Id, Business_Unit_Number__c, MAS_Line_of_Business__c,
+                               MAS_Library__c, MAS_Company_Code__c, Facility_Id__c,
+                               Facility_Name__c, Site_Id__c, Site_Name__c, Bypass_Price_Review__c
+                        FROM MAS_Setup_Detail__c
+                        WHERE (Facility_Id__c =:FacilityId
+                               AND Site_Id__c=:SiteId
+                               AND MAS_Line_of_Business__c=:lineOfBusiness
+                               AND Valid_For_New_Service__c =:newServiceCase)
+                        OR (Facility_Id__c =:FacilityId
+                            AND Valid_For_New_Service__c =:newServiceCase
+                            AND MAS_Line_of_Business__c =:lineOfBusiness)
+                    ];
+                }
+
+                // Business unit fallback
+                if(masSetupDetail.size() == 0) {
+                    masSetupDetail = [
+                        SELECT Id, Business_Unit_Number__c, MAS_Line_of_Business__c,
+                               MAS_Library__c, MAS_Company_Code__c, Facility_Id__c,
+                               Facility_Name__c, Site_Id__c, Site_Name__c, Bypass_Price_Review__c
+                        FROM MAS_Setup_Detail__c
+                        WHERE Business_Unit_Number__c =:businessUnit
+                        AND MAS_Line_of_Business__c =:lineOfBusiness
+                    ];
+                }
+            }
         }
 
-        //New addition to code                                            
-        if(masSetupDetail.size() == 0)
-        {
-            masSetupDetail = [SELECT Id, Business_Unit_Number__c, MAS_Line_of_Business__c,MAS_Library__c, MAS_Company_Code__c,Facility_Id__c, Facility_Name__c, Site_Id__c, Site_Name__c, Bypass_Price_Review__c 
-                                                    FROM MAS_Setup_Detail__c where 
-                                                    Business_Unit_Number__c =:businessUnit and 
-                                                    MAS_Line_of_Business__c =:lineOfBusiness  ];
-        }  
-          //Match map entries to quote lines
-          for (SBQQ__QuoteLine__c quoteLine : quoteLineList) {
+        //Match map entries to quote lines
+        for (SBQQ__QuoteLine__c quoteLine : quoteLineList) {
             if(masSetupDetail!=null && masSetupDetail.size() == 1){
                 quoteLine.MASLibrary__c = masSetupDetail[0].MAS_Library__c;
                 quoteLine.MASCompany__c = masSetupDetail[0].MAS_Company_Code__c;
                  if(aav_zoneType!=null){
-                            
+
                      byPassReviewFlag = PricingRequestSTPProcess.getBypassPriceReview( aav_zoneType, quoteLine.Vendor__r.Parent_Vendor_ID__c,  masSetupDetail[0].MAS_Library__c);
                  }
                  quoteLine.BypassPriceReview__c = byPassReviewFlag == null ? quoteLine.BypassPriceReview__c : byPassReviewFlag;
-                
+
                 qLToUpdate.add(quoteLine);
             }
             else{
