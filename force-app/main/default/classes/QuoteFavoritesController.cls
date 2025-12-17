@@ -4,40 +4,22 @@ public class QuoteFavoritesController {
     //getProducts() returns all products in the catalog that are CPQ eligible
     @AuraEnabled
     public static List<Product2> getProducts() {
-        List<Product2> productList = [SELECT Id, Name, ProductCode, Family, Description, Container_Size__c
-                                      FROM Product2
-                                      WHERE ProductCode != Null AND SBQQ__Component__c = false AND
-                                      SBQQ__PricingMethod__c != Null
-                                      ORDER BY Name];
-        return productList;
+        // Phase 12: Delegate to ProductConfigurationService
+        ProductConfigurationService service = new ProductConfigurationService();
+        return service.getProducts();
     }
     //searchProducts(queryString) returns all products based on a SOSL search of a query string
     @AuraEnabled
     public static List<Product2> searchProducts(String queryString){
-        List<List<SObject>> queryResult = new List<List<SObject>>();
-        List<Product2> queriedProducts = new List<Product2>();
-        queryResult = [FIND :queryString IN ALL FIELDS
-                       RETURNING Product2 (Id, Name, ProductCode, Family, Container_Size__c
-                                           WHERE ProductCode != Null AND SBQQ__Component__c = false AND
-                                           SBQQ__PricingMethod__c != Null)];
-        
-        queriedProducts = queryResult[0];
-        
-        return queriedProducts;
+        // Phase 12: Delegate to ProductConfigurationService
+        ProductConfigurationService service = new ProductConfigurationService();
+        return service.searchProducts(queryString);
     }
     @AuraEnabled
     public static Product2 getPreselectedProduct(string selectedProductName){
-        List<Product2> productList = new List<Product2>();
-        productList = [SELECT Id, Name, ProductCode, Family 
-                       FROM Product2  
-                       WHERE ProductCode != Null 
-                       AND SBQQ__Component__c = false 
-                       AND SBQQ__PricingMethod__c != Null 
-                       AND Name =:selectedProductName LIMIT 1];
-        if(productList.size()>0){
-            return productList[0];
-        }
-        return null;
+        // Phase 12: Delegate to ProductConfigurationService
+        ProductConfigurationService service = new ProductConfigurationService();
+        return service.getPreselectedProduct(selectedProductName);
     }
     //Product Methods End
     
@@ -45,172 +27,47 @@ public class QuoteFavoritesController {
     //getWasteStreams(productId) returns the waste streams registered to the container type
     @AuraEnabled
     public static List<SBQQ__ProductOption__c> getWasteStreams(Id productId) {
-        List<SBQQ__ProductOption__c> eligibleStreams = [SELECT Id, Name, SBQQ__OptionalSKU__c, SBQQ__OptionalSKU__r.Name, SBQQ__OptionalSKU__r.ProductCode
-                                                        FROM SBQQ__ProductOption__c
-                                                        WHERE SBQQ__ConfiguredSKU__c =: productId AND SBQQ__ProductFamily__c = 'Waste Category' And SBQQ__OptionalSKU__r.IsActive = true];
-        Set<Id> categoryIds = new Set<Id>();
-        for (SBQQ__ProductOption__c po : eligibleStreams) {
-            categoryIds.add(po.SBQQ__OptionalSKU__c);
-        }
-        List<SBQQ__ProductOption__c> eligibleMaterials = [SELECT Id, Name, SBQQ__ConfiguredSKU__c, SBQQ__OptionalSKU__c, SBQQ__OptionalSKU__r.Name, 
-                                                          SBQQ__OptionalSKU__r.ProductCode
-                                                          FROM SBQQ__ProductOption__c
-                                                          WHERE SBQQ__ConfiguredSKU__c IN :categoryIds
-                                                          ORDER BY SBQQ__OptionalSKU__r.Name];
-        return eligibleMaterials;
+        // Phase 12: Delegate to ProductConfigurationService
+        ProductConfigurationService service = new ProductConfigurationService();
+        return service.getWasteStreams(productId);
     }
     //Material Methods End
     
-   
+
     // Changes by - Toshender Kumar
-    // Correction in logic to match the picklist values with shown and hidden values. Earlier the logic was to check the string contains (LIKE logic), 
+    // Correction in logic to match the picklist values with shown and hidden values. Earlier the logic was to check the string contains (LIKE logic),
     // It is now amended to do exact match of equipment size. SDT-21768
     @AuraEnabled
     public static Map<String, String> getSizes(Id productId, Boolean returnAll) {
-        Map<String, String> sizeMap = new Map<String, String>();
-        List<SBQQ__ConfigurationAttribute__c> containerAtt = [SELECT Id, SBQQ__TargetField__c, SBQQ__Product__c, SBQQ__ShownValues__c, SBQQ__HiddenValues__c
-                                                              FROM SBQQ__ConfigurationAttribute__c
-                                                              WHERE SBQQ__Product__c =: productId AND SBQQ__TargetField__c = 'Equipment_Size__c'];
-        List<Schema.PicklistEntry> sizePicklist = SBQQ__QuoteLine__c.Equipment_Size__c.getDescribe().getPicklistValues();
-        if (returnAll){
-            for (Schema.PicklistEntry ple: sizePicklist) {
-                sizeMap.put(ple.value, ple.label);
-            }
-            return sizeMap;
-        } else if (containerAtt.size() != 1) {
-            sizeMap.put('UNK', 'Unknown');
-            return sizeMap;
-        } else {
-            
-            // The values in SBQQ__ShownValues__c and SBQQ__HiddenValues__c are stored with newline character separated.
-            string SPLIT_KEY = '\n';
-  
-            String shownValues = containerAtt[0].SBQQ__ShownValues__c;
-            List<String> lstShowValues = new List<String>();
-            lstShowValues = Split(SPLIT_KEY,shownValues);   // Split by newline character
-
-            system.debug('Shown Values are: ' + shownValues);
-            String hiddenValues = containerAtt[0].SBQQ__HiddenValues__c;
-            List<String> lsthiddenValues = new List<string>(); 
-            lsthiddenValues = Split(SPLIT_KEY,hiddenValues); // Split by newline character
-            
-            for (Schema.PicklistEntry ple: sizePicklist) {
-                if (!lstShowValues.isEmpty() && lstShowValues.contains(ple.value)) {
-                    sizeMap.put(ple.value, ple.label);
-                } else  if (!lsthiddenValues.isEmpty() && !lsthiddenValues.contains(ple.value)) {
-                    sizeMap.put(ple.value, ple.label);
-                } else if (lsthiddenValues.isEmpty() && lstShowValues.isEmpty()){
-                    sizeMap.put(ple.value, ple.label);
-                }
-            }
-            return sizeMap;
-        }
+        // Phase 12: Delegate to ProductConfigurationService
+        ProductConfigurationService service = new ProductConfigurationService();
+        return service.getSizes(productId, returnAll);
     }
-
-        // Splits the string based on the key provided
-        // Changes by - Toshender Kumar
-        // SDT-21768 
-       private static List<String>  Split(string key, string stringToSplit ){
-            
-            if(stringToSplit!=null && !string.isEmpty(stringToSplit)){
-               return stringToSplit.split(key); 
-            }
-
-            return new List<String>();
-       }
     
     //Get Favorites given the context of a product
+    //Phase 13: Delegate to FavoritesService
     @AuraEnabled(cacheable=true)
-    public static List<FavoriteWrapper> getFavorites(Id productId){
-        List<FavoriteWrapper> productFavorites = new List<FavoriteWrapper>();
-        
-        List<SBQQ__FavoriteProduct__c> productFavoriteDetails = [SELECT Id, SBQQ__Favorite__r.Name, SBQQ__Favorite__c, SBQQ__ConfigurationAttributes__c,
-                                                                SBQQ__Product__r.Family, SBQQ__Product__r.Name, SBQQ__Quantity__c
-                                                                FROM SBQQ__FavoriteProduct__c
-                                                                WHERE SBQQ__Product__c =: productId OR
-                                                                SBQQ__RequiredBy__r.SBQQ__RequiredBy__r.SBQQ__Product__c =: productId
-                                                                ORDER BY SBQQ__Favorite__c ASC];
-        
-        if(productFavoriteDetails.size() == 0) {
-            return productFavorites;
-        }
-		/*
- 		String favoriteIndex = '';
-        FavoriteWrapper favoriteConfig = new FavoriteWrapper();
-        for (SBQQ__FavoriteProduct__c fp : productFavoriteDetails) {
-            favoriteIndex = (favoriteIndex == '') ? fp.SBQQ__Favorite__c : favoriteIndex;
- 		*/
-        
-        Id favoriteIndex;
-        FavoriteWrapper favoriteConfig = new FavoriteWrapper();
-        system.debug('productFavoriteDetails--->'+ productFavoriteDetails);
-        for (SBQQ__FavoriteProduct__c fp : productFavoriteDetails) {
-            system.debug('favoriteIndex--->'+ favoriteIndex);
-            system.debug('favoriteIndex2--->'+ favoriteIndex);
-            if (favoriteIndex != fp.SBQQ__Favorite__c){
-                productFavorites.add(favoriteConfig);
-                favoriteConfig = new FavoriteWrapper();
-                favoriteIndex = fp.SBQQ__Favorite__c;
-                favoriteConfig.favoriteId = fp.SBQQ__Favorite__c;
-            }
-            if (fp.SBQQ__Product__r.Family == 'Waste Stream') {
-                favoriteConfig.materialType = fp.SBQQ__Product__r.Name;
-            }
-            if (fp.SBQQ__Product__c == productId) {
-                favoriteConfig.containerType = fp.SBQQ__Product__r.Name;
-                favoriteConfig.quantity = fp.SBQQ__Quantity__c;
-                String confAttributes = fp.SBQQ__ConfigurationAttributes__c;
-                Map<String, Object> attributes = (Map<String, Object>) JSON.deserializeUntyped(confAttributes);
-                favoriteConfig.equipmentSize = (String)attributes.get('Equipment_Size__c');
-                favoriteConfig.ownership = (String)attributes.get('Ownership__c');
-            }
-        }
-        productFavorites.add(favoriteConfig);
-
-        return productFavorites;
+    public static List<FavoritesService.FavoriteWrapper> getFavorites(Id productId){
+        // Phase 13: Delegate to FavoritesService
+        FavoritesService service = new FavoritesService();
+        return service.getFavorites(productId);
     }
 
     //Call to centralized favorites method to write quote lines
+    //Phase 13: Delegate to FavoritesService
     @AuraEnabled
     public static String addQuoteFavorite(Id favoriteId, Id quoteId) {
-        SBQQ__Quote__c quote = new SBQQ__Quote__c();
-        quote = [SELECT Id, SBQQ__Opportunity2__r.Case__c
-                FROM SBQQ__Quote__c
-                WHERE Id =: quoteId];
-        
-        //Ref: QuoteProcurementController for documentation
-        String returnedId = QuoteProcurementController.addQuoteandQuoteine(favoriteId, quote.SBQQ__Opportunity2__r.Case__c, quoteId, true);
-
-        SBQQ__QuoteLine__c newQL = [SELECT Id, SBQQ__StartDate__c
-                                    FROM SBQQ__QuoteLine__c
-                                    WHERE SBQQ__ProductOption__c = null
-                                    ORDER BY CreatedDate DESC
-                                    LIMIT 1];
-
-        //Date SLADateTime = NULL;//determineSLA(newQL.Id);
-        //sdt-27107
-        //newQL.SBQQ__StartDate__c = SLADateTime;
-        //newQL.SBQQ__EndDate__c = SLADateTime;//added by seema
-        //sdt-27107 end
-        try {
-            //update newQL;
-            return newQL.Id;
-        } catch (exception e) {
-            system.debug(e.getMessage());
-            return newQL.Id;
-        }
-
+        // Phase 13: Delegate to FavoritesService
+        FavoritesService service = new FavoritesService();
+        return service.addQuoteFavorite(favoriteId, quoteId);
     }
     
+    //Phase 13: Delegate to FavoritesService
     @AuraEnabled
     public static String createNonFavoriteLine(Id quoteId, Id productId, Id wasteStream, String equipmentSize) {
-
-        String successMessage;
-
-        successMessage = QuoteProcurementController.createQuoteLines(quoteId, productId, wasteStream, equipmentSize);
-
-        return successMessage;
-
+        // Phase 13: Delegate to FavoritesService
+        FavoritesService service = new FavoritesService();
+        return service.createNonFavoriteLine(quoteId, productId, wasteStream, equipmentSize);
     }
      /**************************************************************
     * Method name : determineSLAForAlternateProducts
@@ -436,16 +293,7 @@ public class QuoteFavoritesController {
         EntitlementMatchingService service = new EntitlementMatchingService();
         return service.getRelatedEntitleMent(quoteId, parentqLineId);
     }
-    
-    public class FavoriteWrapper{
-        @AuraEnabled public String favoriteId {get; set;}
-        @AuraEnabled public String containerType {get; set;}
-        @AuraEnabled public String equipmentSize {get; set;}
-        @AuraEnabled public String materialType {get; set;}
-        @AuraEnabled public Decimal quantity {get; set;}
-        @AuraEnabled public String ownership {get; set;}
-        @AuraEnabled public Boolean quantityEditable {get; set;}
-    }
 
     // Phase 11a: currentDateTime inner class moved to SLAManagementService
+    // Phase 13: FavoriteWrapper inner class moved to FavoritesService
 }

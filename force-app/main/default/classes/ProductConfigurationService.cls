@@ -322,4 +322,157 @@ public class ProductConfigurationService {
         public String label { get; set; }
         public Boolean selected { get; set; }
     }
+
+    // ========== Phase 12: Product Query/Configuration Methods ==========
+    // Extracted from QuoteFavoritesController (lines 6-120)
+
+    /**
+     * @description Get all CPQ-eligible products
+     * Replaces: QuoteFavoritesController.getProducts()
+     * @return List of Product2 records
+     * Phase 12: Extracted from QuoteFavoritesController
+     */
+    public List<Product2> getProducts() {
+        List<Product2> productList = [SELECT Id, Name, ProductCode, Family, Description, Container_Size__c
+                                      FROM Product2
+                                      WHERE ProductCode != Null AND SBQQ__Component__c = false AND
+                                      SBQQ__PricingMethod__c != Null
+                                      ORDER BY Name];
+        return productList;
+    }
+
+    /**
+     * @description Search products using SOSL query
+     * Replaces: QuoteFavoritesController.searchProducts()
+     * @param queryString Search query string
+     * @return List of Product2 records matching search
+     * Phase 12: Extracted from QuoteFavoritesController
+     */
+    public List<Product2> searchProducts(String queryString){
+        List<List<SObject>> queryResult = new List<List<SObject>>();
+        List<Product2> queriedProducts = new List<Product2>();
+        queryResult = [FIND :queryString IN ALL FIELDS
+                       RETURNING Product2 (Id, Name, ProductCode, Family, Container_Size__c
+                                           WHERE ProductCode != Null AND SBQQ__Component__c = false AND
+                                           SBQQ__PricingMethod__c != Null)];
+
+        queriedProducts = queryResult[0];
+
+        return queriedProducts;
+    }
+
+    /**
+     * @description Get preselected product by name
+     * Replaces: QuoteFavoritesController.getPreselectedProduct()
+     * @param selectedProductName Product name to search for
+     * @return Product2 record or null if not found
+     * Phase 12: Extracted from QuoteFavoritesController
+     */
+    public Product2 getPreselectedProduct(string selectedProductName){
+        List<Product2> productList = new List<Product2>();
+        productList = [SELECT Id, Name, ProductCode, Family
+                       FROM Product2
+                       WHERE ProductCode != Null
+                       AND SBQQ__Component__c = false
+                       AND SBQQ__PricingMethod__c != Null
+                       AND Name =:selectedProductName LIMIT 1];
+        if(productList.size()>0){
+            return productList[0];
+        }
+        return null;
+    }
+
+    /**
+     * @description Get waste streams (categories and materials) for a product
+     * Replaces: QuoteFavoritesController.getWasteStreams()
+     * @param productId Product ID
+     * @return List of product options for waste streams
+     * Phase 12: Extracted from QuoteFavoritesController
+     */
+    public List<SBQQ__ProductOption__c> getWasteStreams(Id productId) {
+        List<SBQQ__ProductOption__c> eligibleStreams = [SELECT Id, Name, SBQQ__OptionalSKU__c, SBQQ__OptionalSKU__r.Name, SBQQ__OptionalSKU__r.ProductCode
+                                                        FROM SBQQ__ProductOption__c
+                                                        WHERE SBQQ__ConfiguredSKU__c =: productId AND SBQQ__ProductFamily__c = 'Waste Category' And SBQQ__OptionalSKU__r.IsActive = true];
+        Set<Id> categoryIds = new Set<Id>();
+        for (SBQQ__ProductOption__c po : eligibleStreams) {
+            categoryIds.add(po.SBQQ__OptionalSKU__c);
+        }
+        List<SBQQ__ProductOption__c> eligibleMaterials = [SELECT Id, Name, SBQQ__ConfiguredSKU__c, SBQQ__OptionalSKU__c, SBQQ__OptionalSKU__r.Name,
+                                                          SBQQ__OptionalSKU__r.ProductCode
+                                                          FROM SBQQ__ProductOption__c
+                                                          WHERE SBQQ__ConfiguredSKU__c IN :categoryIds
+                                                          ORDER BY SBQQ__OptionalSKU__r.Name];
+        return eligibleMaterials;
+    }
+
+    /**
+     * @description Get equipment sizes for a product based on configuration attributes
+     * Changes by - Toshender Kumar
+     * Correction in logic to match the picklist values with shown and hidden values. Earlier the logic was to check the string contains (LIKE logic),
+     * It is now amended to do exact match of equipment size. SDT-21768
+     * Replaces: QuoteFavoritesController.getSizes()
+     * @param productId Product ID
+     * @param returnAll If true, return all sizes; if false, filter by configuration
+     * @return Map of equipment size values to labels
+     * Phase 12: Extracted from QuoteFavoritesController
+     */
+    public Map<String, String> getSizes(Id productId, Boolean returnAll) {
+        Map<String, String> sizeMap = new Map<String, String>();
+        List<SBQQ__ConfigurationAttribute__c> containerAtt = [SELECT Id, SBQQ__TargetField__c, SBQQ__Product__c, SBQQ__ShownValues__c, SBQQ__HiddenValues__c
+                                                              FROM SBQQ__ConfigurationAttribute__c
+                                                              WHERE SBQQ__Product__c =: productId AND SBQQ__TargetField__c = 'Equipment_Size__c'];
+        List<Schema.PicklistEntry> sizePicklist = SBQQ__QuoteLine__c.Equipment_Size__c.getDescribe().getPicklistValues();
+        if (returnAll){
+            for (Schema.PicklistEntry ple: sizePicklist) {
+                sizeMap.put(ple.value, ple.label);
+            }
+            return sizeMap;
+        } else if (containerAtt.size() != 1) {
+            sizeMap.put('UNK', 'Unknown');
+            return sizeMap;
+        } else {
+
+            // The values in SBQQ__ShownValues__c and SBQQ__HiddenValues__c are stored with newline character separated.
+            string SPLIT_KEY = '\n';
+
+            String shownValues = containerAtt[0].SBQQ__ShownValues__c;
+            List<String> lstShowValues = new List<String>();
+            lstShowValues = Split(SPLIT_KEY,shownValues);   // Split by newline character
+
+            system.debug('Shown Values are: ' + shownValues);
+            String hiddenValues = containerAtt[0].SBQQ__HiddenValues__c;
+            List<String> lsthiddenValues = new List<string>();
+            lsthiddenValues = Split(SPLIT_KEY,hiddenValues); // Split by newline character
+
+            for (Schema.PicklistEntry ple: sizePicklist) {
+                if (!lstShowValues.isEmpty() && lstShowValues.contains(ple.value)) {
+                    sizeMap.put(ple.value, ple.label);
+                } else  if (!lsthiddenValues.isEmpty() && !lsthiddenValues.contains(ple.value)) {
+                    sizeMap.put(ple.value, ple.label);
+                } else if (lsthiddenValues.isEmpty() && lstShowValues.isEmpty()){
+                    sizeMap.put(ple.value, ple.label);
+                }
+            }
+            return sizeMap;
+        }
+    }
+
+    /**
+     * @description Splits the string based on the key provided
+     * Changes by - Toshender Kumar
+     * SDT-21768
+     * Helper method for getSizes()
+     * @param key Delimiter to split on
+     * @param stringToSplit String to split
+     * @return List of split strings
+     * Phase 12: Extracted from QuoteFavoritesController
+     */
+    private List<String> Split(string key, string stringToSplit ){
+
+        if(stringToSplit!=null && !string.isEmpty(stringToSplit)){
+           return stringToSplit.split(key);
+        }
+
+        return new List<String>();
+    }
 }
