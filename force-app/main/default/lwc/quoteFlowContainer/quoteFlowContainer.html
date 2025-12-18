@@ -1,0 +1,213 @@
+<template>
+    <!-- WM Quote Flow Container - Root component for quote creation -->
+    <div class="wm-quote-flow">
+        <!-- Skip link for accessibility -->
+        <a href="#main-content" class="wm-skip-link">Skip to main content</a>
+
+        <!-- Header Section -->
+        <header class="wm-header">
+            <div class="wm-header-content">
+                <div class="wm-header-left">
+                    <lightning-icon
+                        icon-name="standard:opportunity"
+                        alternative-text="Quote"
+                        size="medium"
+                        class="wm-header-icon">
+                    </lightning-icon>
+                    <div class="wm-header-text">
+                        <h1 class="wm-header-title">Create Quote</h1>
+                        <p class="wm-header-subtitle" if:true={accountName}>
+                            {accountName} • {quoteNumber}
+                        </p>
+                    </div>
+                </div>
+                <div class="wm-header-actions">
+                    <template if:true={showModeToggle}>
+                        <lightning-button-group>
+                            <lightning-button
+                                label="Quick Quote"
+                                variant={quickModeVariant}
+                                onclick={handleQuickMode}
+                                class="wm-mode-toggle">
+                            </lightning-button>
+                            <lightning-button
+                                label="Advanced"
+                                variant={advancedModeVariant}
+                                onclick={handleAdvancedMode}
+                                class="wm-mode-toggle">
+                            </lightning-button>
+                        </lightning-button-group>
+                    </template>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="wm-main-content">
+            <div class="wm-content-layout">
+
+                <!-- Main Panel (Quick Quote Wizard or Advanced Builder) -->
+                <div class="wm-main-panel">
+
+                    <!-- Quick Quote Mode -->
+                    <template if:true={isQuickMode}>
+                        <c-quick-quote-wizard
+                            record-id={recordId}
+                            quote-id={quoteId}
+                            account-id={accountId}
+                            flow-mode={flowMode}
+                            onwizardcomplete={handleWizardComplete}
+                            onwizardstep={handleWizardStep}>
+                        </c-quick-quote-wizard>
+                    </template>
+
+                    <!-- Advanced Builder Mode (Future) -->
+                    <template if:true={isAdvancedMode}>
+                        <div class="wm-advanced-placeholder">
+                            <lightning-icon
+                                icon-name="utility:settings"
+                                size="large">
+                            </lightning-icon>
+                            <h2>Advanced Quote Builder</h2>
+                            <p>Coming soon: Full-featured quote configuration</p>
+                            <lightning-button
+                                label="Switch to Quick Quote"
+                                variant="brand"
+                                onclick={handleQuickMode}
+                                class="wm-btn-primary">
+                            </lightning-button>
+                        </div>
+                    </template>
+
+                </div>
+
+                <!-- Sidebar (Collapsible on mobile) -->
+                <aside class="wm-sidebar" if:true={showSidebar}>
+                    <div class="wm-sidebar-content">
+
+                        <!-- Quote Summary Card -->
+                        <div class="wm-card wm-summary-card">
+                            <h3 class="wm-card-header">Quote Summary</h3>
+                            <dl class="wm-summary-list">
+                                <dt>Quote Number:</dt>
+                                <dd>{quoteNumber}</dd>
+
+                                <dt>Account:</dt>
+                                <dd>{accountName}</dd>
+
+                                <dt>Status:</dt>
+                                <dd>
+                                    <lightning-badge
+                                        label={quoteStatus}
+                                        class="wm-badge-status">
+                                    </lightning-badge>
+                                </dd>
+
+                                <template if:true={quoteValue}>
+                                    <dt>Estimated Value:</dt>
+                                    <dd>
+                                        <lightning-formatted-number
+                                            value={quoteValue}
+                                            format-style="currency"
+                                            currency-code="USD">
+                                        </lightning-formatted-number>
+                                    </dd>
+                                </template>
+                            </dl>
+                        </div>
+
+                        <!-- Contextual Help Card -->
+                        <div class="wm-card wm-help-card" if:true={helpContent}>
+                            <div class="wm-card-header-with-icon">
+                                <lightning-icon
+                                    icon-name="utility:info"
+                                    size="x-small"
+                                    class="wm-icon-info">
+                                </lightning-icon>
+                                <h3>Help</h3>
+                            </div>
+                            <div class="wm-help-content">
+                                <p>{helpContent}</p>
+                                <template if:true={helpLink}>
+                                    <a href={helpLink} target="_blank" class="wm-help-link">
+                                        Learn More
+                                        <lightning-icon
+                                            icon-name="utility:new_window"
+                                            size="xx-small">
+                                        </lightning-icon>
+                                    </a>
+                                </template>
+                            </div>
+                        </div>
+
+                    </div>
+                </aside>
+
+            </div>
+        </main>
+
+        <!-- Footer with Actions -->
+        <footer class="wm-footer">
+            <div class="wm-footer-content">
+                <div class="wm-footer-left">
+                    <template if:true={lastSaved}>
+                        <span class="wm-autosave-text">
+                            <lightning-icon
+                                icon-name="utility:success"
+                                size="xx-small"
+                                class="wm-icon-success">
+                            </lightning-icon>
+                            Last saved: {lastSavedFormatted}
+                        </span>
+                    </template>
+                </div>
+                <div class="wm-footer-actions">
+                    <lightning-button
+                        label="Cancel"
+                        onclick={handleCancel}
+                        disabled={isSaving}>
+                    </lightning-button>
+                    <lightning-button
+                        label="Save Draft"
+                        onclick={handleSaveDraft}
+                        disabled={isSaving}
+                        class="wm-btn-secondary">
+                    </lightning-button>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Loading Spinner Overlay -->
+        <template if:true={isLoading}>
+            <div class="wm-loading-overlay">
+                <lightning-spinner
+                    alternative-text="Loading quote data..."
+                    size="medium">
+                </lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Toast Notifications (Success/Error/Info) -->
+        <template if:true={showToast}>
+            <div class={toastClass} role="alert">
+                <lightning-icon
+                    icon-name={toastIcon}
+                    size="small"
+                    class="wm-toast-icon">
+                </lightning-icon>
+                <div class="wm-toast-content">
+                    <h3 class="wm-toast-title">{toastTitle}</h3>
+                    <p class="wm-toast-message">{toastMessage}</p>
+                </div>
+                <lightning-button-icon
+                    icon-name="utility:close"
+                    alternative-text="Close"
+                    variant="bare-inverse"
+                    onclick={handleCloseToast}
+                    class="wm-toast-close">
+                </lightning-button-icon>
+            </div>
+        </template>
+
+    </div>
+</template>
