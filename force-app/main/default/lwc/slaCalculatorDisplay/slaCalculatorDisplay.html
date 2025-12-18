@@ -1,0 +1,339 @@
+<template>
+    <!-- WM SLA Calculator Display - Transparent SLA with Phase 11 Service Integration -->
+    <div class="wm-sla-calculator">
+
+        <!-- Loading State -->
+        <template if:true={isCalculating}>
+            <div class="wm-calculating-state">
+                <lightning-spinner alternative-text="Calculating service date..." size="small"></lightning-spinner>
+                <p class="wm-calculating-text">Calculating earliest service date...</p>
+            </div>
+        </template>
+
+        <!-- Calculated SLA Result -->
+        <template if:true={hasCalculatedSla}>
+            <div class="wm-sla-result-card">
+
+                <!-- Main SLA Date Display -->
+                <div class="wm-sla-header">
+                    <div class="wm-sla-icon">
+                        <lightning-icon
+                            icon-name="utility:date_time"
+                            size="small"
+                            variant="success">
+                        </lightning-icon>
+                    </div>
+                    <div class="wm-sla-main">
+                        <label class="wm-sla-label">Earliest Service Date</label>
+                        <div class="wm-sla-date">{formattedSlaDate}</div>
+                        <div class="wm-sla-time">{formattedSlaTime}</div>
+                    </div>
+                    <div class="wm-sla-actions">
+                        <lightning-button-icon
+                            icon-name={detailsIcon}
+                            alternative-text="Toggle calculation details"
+                            title="Why this date?"
+                            onclick={toggleCalculationDetails}
+                            variant="border-filled"
+                            class="wm-details-btn">
+                        </lightning-button-icon>
+                    </div>
+                </div>
+
+                <!-- Expandable Calculation Details -->
+                <template if:true={showCalculationDetails}>
+                    <div class="wm-calculation-details">
+                        <div class="wm-details-header">
+                            <h4>How We Calculated This Date</h4>
+                        </div>
+
+                        <!-- Calculation Steps -->
+                        <div class="wm-calculation-steps">
+
+                            <!-- Step 1: Current Time -->
+                            <div class="wm-calc-step">
+                                <div class="wm-step-icon">
+                                    <lightning-icon
+                                        icon-name="utility:date_input"
+                                        size="xx-small"
+                                        class="wm-icon-neutral">
+                                    </lightning-icon>
+                                </div>
+                                <div class="wm-step-content">
+                                    <span class="wm-step-label">Current Time:</span>
+                                    <span class="wm-step-value">{currentDateTime}</span>
+                                </div>
+                            </div>
+
+                            <!-- Step 2: Entitlement (if applicable) -->
+                            <template if:true={hasEntitlement}>
+                                <div class="wm-calc-step wm-step-highlight">
+                                    <div class="wm-step-icon">
+                                        <lightning-icon
+                                            icon-name="utility:contract"
+                                            size="xx-small"
+                                            class="wm-icon-success">
+                                        </lightning-icon>
+                                    </div>
+                                    <div class="wm-step-content">
+                                        <span class="wm-step-label">Your Service Guarantee:</span>
+                                        <span class="wm-step-value">{entitlementGuarantee}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Entitlement Details Expandable -->
+                                <div class="wm-entitlement-details">
+                                    <lightning-button
+                                        label={entitlementDetailsLabel}
+                                        icon-name={entitlementDetailsIcon}
+                                        variant="base"
+                                        onclick={toggleEntitlementDetails}
+                                        class="wm-expand-btn-sm">
+                                    </lightning-button>
+
+                                    <template if:true={showEntitlementDetails}>
+                                        <div class="wm-entitlement-info">
+                                            <dl class="wm-info-grid">
+                                                <dt>Entitlement Type:</dt>
+                                                <dd>{entitlement.Service_Guarantee_Category__c}</dd>
+
+                                                <dt>Guarantee Value:</dt>
+                                                <dd>{entitlement.Service_Guarantee_Category_Value__c} {entitlementUnit}</dd>
+
+                                                <template if:true={entitlement.Before_After__c}>
+                                                    <dt>Timing Rule:</dt>
+                                                    <dd>{entitlement.Before_After__c} {entitlement.Call_Time__c}</dd>
+                                                </template>
+
+                                                <template if:true={entitlement.Project_Code__c}>
+                                                    <dt>Project:</dt>
+                                                    <dd>{entitlement.Project_Code__c}</dd>
+                                                </template>
+
+                                                <dt>Priority Level:</dt>
+                                                <dd>{entitlementPriority}</dd>
+                                            </dl>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <!-- Step 2b: Industry Standard (if no entitlement) -->
+                            <template if:false={hasEntitlement}>
+                                <div class="wm-calc-step">
+                                    <div class="wm-step-icon">
+                                        <lightning-icon
+                                            icon-name="utility:standard_objects"
+                                            size="xx-small"
+                                            class="wm-icon-neutral">
+                                        </lightning-icon>
+                                    </div>
+                                    <div class="wm-step-content">
+                                        <span class="wm-step-label">Using Industry Standard:</span>
+                                        <span class="wm-step-value">{industryStandardSla}</span>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Step 3: Location Timezone -->
+                            <div class="wm-calc-step">
+                                <div class="wm-step-icon">
+                                    <lightning-icon
+                                        icon-name="utility:world"
+                                        size="xx-small"
+                                        class="wm-icon-neutral">
+                                    </lightning-icon>
+                                </div>
+                                <div class="wm-step-content">
+                                    <span class="wm-step-label">Service Location Timezone:</span>
+                                    <span class="wm-step-value">{locationTimezone}</span>
+                                </div>
+                            </div>
+
+                            <!-- Step 4: Business Hours -->
+                            <div class="wm-calc-step">
+                                <div class="wm-step-icon">
+                                    <lightning-icon
+                                        icon-name="utility:clock"
+                                        size="xx-small"
+                                        class="wm-icon-neutral">
+                                    </lightning-icon>
+                                </div>
+                                <div class="wm-step-content">
+                                    <span class="wm-step-label">Business Hours:</span>
+                                    <span class="wm-step-value">{businessHoursRange}</span>
+                                </div>
+                            </div>
+
+                            <!-- Step 5: Calculation -->
+                            <div class="wm-calc-step">
+                                <div class="wm-step-icon">
+                                    <lightning-icon
+                                        icon-name="utility:add"
+                                        size="xx-small"
+                                        class="wm-icon-info">
+                                    </lightning-icon>
+                                </div>
+                                <div class="wm-step-content">
+                                    <span class="wm-step-label">Adding:</span>
+                                    <span class="wm-step-value">{slaAdditionText}</span>
+                                </div>
+                            </div>
+
+                            <!-- Step 6: Result -->
+                            <div class="wm-calc-step wm-step-result">
+                                <div class="wm-step-icon">
+                                    <lightning-icon
+                                        icon-name="utility:success"
+                                        size="xx-small"
+                                        variant="success">
+                                    </lightning-icon>
+                                </div>
+                                <div class="wm-step-content">
+                                    <span class="wm-step-label">Result:</span>
+                                    <span class="wm-step-value wm-result-emphasis">{formattedSlaDate} at {formattedSlaTime}</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Alternative Options (if available) -->
+                        <template if:true={hasAlternatives}>
+                            <div class="wm-alternatives-section">
+                                <h5>
+                                    <lightning-icon
+                                        icon-name="utility:info"
+                                        size="xx-small">
+                                    </lightning-icon>
+                                    Need service sooner?
+                                </h5>
+                                <div class="wm-alternatives-list">
+                                    <template for:each={alternatives} for:item="alt">
+                                        <div key={alt.id} class="wm-alternative-option">
+                                            <div class="wm-alt-content">
+                                                <div class="wm-alt-date">{alt.dateLabel}</div>
+                                                <div class="wm-alt-details">{alt.details}</div>
+                                            </div>
+                                            <lightning-button
+                                                label="Select"
+                                                variant="neutral"
+                                                data-alt-date={alt.date}
+                                                onclick={handleSelectAlternative}
+                                                class="wm-alt-btn">
+                                            </lightning-button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                    </div>
+                </template>
+
+                <!-- Date Input for User Selection -->
+                <div class="wm-date-input-section">
+                    <lightning-input
+                        type="date"
+                        label="Service Start Date"
+                        value={selectedDate}
+                        min={minimumDate}
+                        onchange={handleDateChange}
+                        required
+                        field-level-help={dateFieldHelp}
+                        class="wm-date-picker">
+                    </lightning-input>
+
+                    <lightning-input
+                        type="time"
+                        label="Start Time"
+                        value={selectedTime}
+                        onchange={handleTimeChange}
+                        class="wm-time-picker">
+                    </lightning-input>
+                </div>
+
+                <!-- Warning if selecting date before SLA -->
+                <template if:true={showEarlyDateWarning}>
+                    <div class="wm-warning-banner">
+                        <lightning-icon
+                            icon-name="utility:warning"
+                            size="small"
+                            variant="warning">
+                        </lightning-icon>
+                        <div class="wm-warning-content">
+                            <h4>Selected date is before calculated SLA</h4>
+                            <p>The selected date ({selectedDate}) is earlier than the calculated service guarantee date ({formattedSlaDate}). This may require special approval or expedited service fees.</p>
+                        </div>
+                    </div>
+                </template>
+
+            </div>
+        </template>
+
+        <!-- Override Section (for authorized users) -->
+        <template if:true={canOverrideSla}>
+            <div class="wm-override-section">
+                <div class="wm-override-header">
+                    <lightning-input
+                        type="checkbox"
+                        label="Override Calculated SLA (Requires Authorization)"
+                        checked={isOverridden}
+                        onchange={handleOverrideToggle}>
+                    </lightning-input>
+                </div>
+
+                <template if:true={isOverridden}>
+                    <div class="wm-override-form">
+                        <lightning-input
+                            type="date"
+                            label="Custom Service Date"
+                            value={overrideDate}
+                            onchange={handleOverrideDateChange}
+                            required
+                            class="wm-override-input">
+                        </lightning-input>
+
+                        <lightning-textarea
+                            label="Override Reason (Required)"
+                            placeholder="Explain why you're overriding the calculated SLA..."
+                            value={overrideReason}
+                            onchange={handleOverrideReasonChange}
+                            required
+                            max-length="500"
+                            class="wm-override-textarea">
+                        </lightning-textarea>
+
+                        <div class="wm-override-warning">
+                            <lightning-icon
+                                icon-name="utility:info"
+                                size="x-small">
+                            </lightning-icon>
+                            <span>SLA overrides are logged and may require manager approval.</span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Error State -->
+        <template if:true={hasError}>
+            <div class="wm-error-state">
+                <lightning-icon
+                    icon-name="utility:error"
+                    size="medium"
+                    variant="error">
+                </lightning-icon>
+                <h3>Unable to Calculate Service Date</h3>
+                <p class="wm-error-message">{errorMessage}</p>
+                <lightning-button
+                    label="Retry Calculation"
+                    variant="brand"
+                    icon-name="utility:refresh"
+                    onclick={retryCalculation}
+                    class="wm-btn-primary">
+                </lightning-button>
+            </div>
+        </template>
+
+    </div>
+</template>
