@@ -1,0 +1,587 @@
+/**
+ * WM Location Selector Styles
+ * Address search, recent locations, and manual entry with service area validation
+ */
+
+:host {
+    --wm-green-primary: #1c8200;
+    --wm-green-dark: #135B00;
+    --wm-teal-dark: #024731;
+    --wm-sand-light: #F8F8F2;
+
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+
+    display: block;
+}
+
+/* ========== Container ========== */
+.wm-location-selector {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+/* ========== Tabs ========== */
+.wm-location-tabs {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.wm-tab-content {
+    padding: var(--spacing-lg);
+}
+
+/* ========== Search Section ========== */
+.wm-search-section {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--spacing-md);
+    align-items: flex-end;
+}
+
+.wm-search-input {
+    flex: 1;
+}
+
+.wm-search-btn {
+    flex-shrink: 0;
+}
+
+/* ========== Search Results ========== */
+.wm-search-results {
+    margin-top: var(--spacing-lg);
+}
+
+.wm-results-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+.wm-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.wm-result-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--spacing-md);
+    align-items: center;
+    padding: var(--spacing-md);
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wm-result-item:hover {
+    border-color: var(--wm-green-primary);
+    box-shadow: 0 2px 4px rgba(28, 130, 0, 0.1);
+    transform: translateX(4px);
+}
+
+.wm-result-icon {
+    flex-shrink: 0;
+    color: var(--wm-green-primary);
+}
+
+.wm-result-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.wm-result-address {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--wm-teal-dark);
+}
+
+.wm-result-details {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.wm-result-distance {
+    font-size: 0.8125rem;
+    color: #666;
+}
+
+.wm-result-action {
+    flex-shrink: 0;
+    color: var(--wm-green-primary);
+}
+
+/* ========== No Results ========== */
+.wm-no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl);
+    background-color: var(--wm-sand-light);
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+.wm-no-results p {
+    font-size: 0.9375rem;
+    color: #666;
+    margin: 0;
+    max-width: 400px;
+}
+
+/* ========== Recent Locations ========== */
+.wm-recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.wm-section-header {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+.wm-location-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.wm-location-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: #FFFFFF;
+    border: 2px solid #E5E5E5;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wm-location-card:hover {
+    border-color: var(--wm-green-primary);
+    box-shadow: 0 4px 8px rgba(28, 130, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.wm-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.wm-card-icon {
+    color: var(--wm-green-primary);
+}
+
+.wm-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+}
+
+.wm-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.wm-card-address {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.wm-card-meta {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+}
+
+.wm-meta-label {
+    font-weight: 600;
+    color: #666;
+}
+
+.wm-meta-value {
+    color: var(--wm-teal-dark);
+}
+
+.wm-card-actions {
+    margin-top: var(--spacing-sm);
+}
+
+/* ========== Empty State ========== */
+.wm-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl);
+    text-align: center;
+}
+
+.wm-empty-icon {
+    color: #CCCCCC;
+}
+
+.wm-empty-state h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #666;
+    margin: 0;
+}
+
+.wm-empty-state p {
+    font-size: 0.9375rem;
+    color: #999;
+    margin: 0;
+    max-width: 400px;
+}
+
+/* ========== Manual Entry Form ========== */
+.wm-manual-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.wm-form-input {
+    width: 100%;
+}
+
+.wm-address-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.wm-grid-city {
+    grid-column: 1;
+}
+
+.wm-grid-state {
+    grid-column: 2;
+}
+
+.wm-grid-zip {
+    grid-column: 3;
+}
+
+/* ========== Validation Section ========== */
+.wm-validation-section {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: 0.5rem;
+}
+
+.wm-validating {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: var(--wm-sand-light);
+    border-radius: 0.25rem;
+    font-size: 0.9375rem;
+    color: #666;
+}
+
+.wm-validation-success {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: #D4EDDA;
+    border: 1px solid var(--wm-green-primary);
+    border-radius: 0.25rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--wm-green-dark);
+}
+
+.wm-validation-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: #FFF3CD;
+    border: 1px solid #F39C12;
+    border-radius: 0.25rem;
+}
+
+.wm-validation-warning strong {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #856404;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.wm-validation-warning p {
+    font-size: 0.8125rem;
+    color: #856404;
+    margin: 0;
+}
+
+/* ========== Form Actions ========== */
+.wm-form-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: flex-end;
+    margin-top: var(--spacing-md);
+}
+
+/* ========== Selected Location ========== */
+.wm-selected-location {
+    background-color: #FFFFFF;
+    border: 2px solid var(--wm-green-primary);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.wm-selected-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: linear-gradient(135deg, rgba(28, 130, 0, 0.1), rgba(28, 130, 0, 0.05));
+    border-bottom: 1px solid rgba(28, 130, 0, 0.2);
+}
+
+.wm-selected-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-success-icon {
+    color: var(--wm-green-primary);
+}
+
+.wm-change-btn {
+    color: var(--wm-green-primary);
+}
+
+.wm-selected-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+}
+
+.wm-selected-icon {
+    flex-shrink: 0;
+    color: var(--wm-green-primary);
+}
+
+.wm-selected-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.wm-selected-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+}
+
+.wm-selected-address {
+    font-size: 0.9375rem;
+    color: #666;
+}
+
+.wm-selected-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.wm-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8125rem;
+    color: #666;
+}
+
+/* ========== Access Instructions ========== */
+.wm-access-section {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid #E5E5E5;
+}
+
+.wm-access-input {
+    width: 100%;
+}
+
+.wm-btn-link {
+    padding-left: 0;
+    color: var(--wm-green-primary);
+}
+
+/* ========== Badges ========== */
+.wm-badge-success {
+    --slds-c-badge-color-background: var(--wm-green-primary);
+}
+
+.wm-badge-warning {
+    --slds-c-badge-color-background: #F39C12;
+}
+
+/* ========== WM Button Overrides ========== */
+.wm-btn-primary {
+    --slds-c-button-brand-color-background: var(--wm-green-primary);
+    --slds-c-button-brand-color-background-hover: var(--wm-green-dark);
+}
+
+.wm-btn-secondary {
+    --slds-c-button-neutral-color-border: var(--wm-green-primary);
+    --slds-c-button-neutral-text-color: var(--wm-green-primary);
+}
+
+/* ========== Error State ========== */
+.wm-error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl);
+    background-color: #FDECEA;
+    border: 2px solid #C23934;
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+.wm-error-content h4 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #C23934;
+    margin: 0 0 0.5rem 0;
+}
+
+.wm-error-content p {
+    font-size: 0.9375rem;
+    color: #721C24;
+    margin: 0 0 var(--spacing-md) 0;
+    max-width: 500px;
+}
+
+/* ========== Responsive Design ========== */
+
+/* Mobile (375px - 767px) */
+@media (max-width: 767px) {
+    .wm-search-section {
+        grid-template-columns: 1fr;
+    }
+
+    .wm-search-btn {
+        width: 100%;
+    }
+
+    .wm-result-item {
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+    }
+
+    .wm-result-action {
+        grid-column: 1 / -1;
+        justify-self: flex-end;
+    }
+
+    .wm-location-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .wm-address-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wm-grid-city,
+    .wm-grid-state,
+    .wm-grid-zip {
+        grid-column: 1;
+    }
+
+    .wm-form-actions {
+        flex-direction: column;
+    }
+
+    .wm-form-actions lightning-button {
+        width: 100%;
+    }
+
+    .wm-selected-card {
+        grid-template-columns: 1fr;
+    }
+
+    .wm-selected-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .wm-change-btn {
+        align-self: flex-end;
+    }
+}
+
+/* Tablet (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .wm-location-cards {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+
+    .wm-address-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .wm-grid-city {
+        grid-column: 1 / -1;
+    }
+
+    .wm-grid-state {
+        grid-column: 1;
+    }
+
+    .wm-grid-zip {
+        grid-column: 2;
+    }
+}
+
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
+    .wm-location-cards {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+}

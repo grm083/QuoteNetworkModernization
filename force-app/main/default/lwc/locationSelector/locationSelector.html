@@ -1,0 +1,355 @@
+<template>
+    <!-- Location Selector Component -->
+    <div class="wm-location-selector">
+
+        <!-- ========== Search/Select Tabs ========== -->
+        <div class="wm-location-tabs">
+            <lightning-tabset variant="scoped" active-tab-value={activeTab}>
+
+                <!-- Tab 1: Search Address -->
+                <lightning-tab label="Search Address" value="search" icon-name="utility:search">
+                    <div class="wm-tab-content">
+
+                        <!-- Address Search Input -->
+                        <div class="wm-search-section">
+                            <lightning-input
+                                type="search"
+                                label="Search for Service Address"
+                                placeholder="Enter street address, city, or ZIP code"
+                                value={searchQuery}
+                                onchange={handleSearchQueryChange}
+                                class="wm-search-input">
+                            </lightning-input>
+
+                            <lightning-button
+                                variant="brand"
+                                label="Search"
+                                icon-name="utility:search"
+                                onclick={handleSearch}
+                                disabled={isSearchDisabled}
+                                class="wm-btn-primary wm-search-btn">
+                            </lightning-button>
+                        </div>
+
+                        <!-- Search Results -->
+                        <template if:true={hasSearchResults}>
+                            <div class="wm-search-results">
+                                <h3 class="wm-results-header">
+                                    <lightning-icon icon-name="utility:location" size="x-small"></lightning-icon>
+                                    Found {searchResults.length} addresses
+                                </h3>
+
+                                <div class="wm-results-list">
+                                    <template for:each={searchResults} for:item="result">
+                                        <div key={result.id} class="wm-result-item" onclick={handleSelectSearchResult} data-location-id={result.id}>
+                                            <div class="wm-result-icon">
+                                                <lightning-icon icon-name="utility:location" size="small"></lightning-icon>
+                                            </div>
+                                            <div class="wm-result-content">
+                                                <div class="wm-result-address">{result.formattedAddress}</div>
+                                                <div class="wm-result-details">
+                                                    <template if:true={result.isServiceable}>
+                                                        <lightning-badge label="Service Available" class="wm-badge-success"></lightning-badge>
+                                                    </template>
+                                                    <template if:false={result.isServiceable}>
+                                                        <lightning-badge label="Outside Service Area" class="wm-badge-warning"></lightning-badge>
+                                                    </template>
+                                                    <span class="wm-result-distance">{result.distance}</span>
+                                                </div>
+                                            </div>
+                                            <div class="wm-result-action">
+                                                <lightning-button-icon
+                                                    icon-name="utility:chevronright"
+                                                    variant="bare"
+                                                    alternative-text="Select address">
+                                                </lightning-button-icon>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- No Results Message -->
+                        <template if:true={showNoResults}>
+                            <div class="wm-no-results">
+                                <lightning-icon icon-name="utility:info" size="small"></lightning-icon>
+                                <p>No addresses found matching your search. Try a different search term or enter the address manually.</p>
+                                <lightning-button
+                                    label="Enter Address Manually"
+                                    onclick={handleSwitchToManual}
+                                    class="wm-btn-secondary">
+                                </lightning-button>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- Tab 2: Recent Locations -->
+                <lightning-tab label="Recent" value="recent" icon-name="utility:clock">
+                    <div class="wm-tab-content">
+
+                        <template if:true={hasRecentLocations}>
+                            <div class="wm-recent-list">
+                                <h3 class="wm-section-header">Recently Used Locations</h3>
+
+                                <div class="wm-location-cards">
+                                    <template for:each={recentLocations} for:item="location">
+                                        <div key={location.id} class="wm-location-card" onclick={handleSelectRecent} data-location-id={location.id}>
+                                            <div class="wm-card-header">
+                                                <lightning-icon icon-name="utility:location" size="small" class="wm-card-icon"></lightning-icon>
+                                                <div class="wm-card-title">{location.name}</div>
+                                            </div>
+                                            <div class="wm-card-body">
+                                                <div class="wm-card-address">{location.formattedAddress}</div>
+                                                <div class="wm-card-meta">
+                                                    <span class="wm-meta-label">Last Used:</span>
+                                                    <span class="wm-meta-value">{location.lastUsedDate}</span>
+                                                </div>
+                                                <template if:true={location.accountName}>
+                                                    <div class="wm-card-meta">
+                                                        <span class="wm-meta-label">Account:</span>
+                                                        <span class="wm-meta-value">{location.accountName}</span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div class="wm-card-actions">
+                                                <lightning-button
+                                                    variant="brand"
+                                                    label="Select"
+                                                    class="wm-btn-primary">
+                                                </lightning-button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Empty Recent State -->
+                        <template if:false={hasRecentLocations}>
+                            <div class="wm-empty-state">
+                                <lightning-icon icon-name="utility:clock" size="large" class="wm-empty-icon"></lightning-icon>
+                                <h3>No Recent Locations</h3>
+                                <p>Locations you use will appear here for quick access.</p>
+                            </div>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- Tab 3: Manual Entry -->
+                <lightning-tab label="Enter Manually" value="manual" icon-name="utility:edit">
+                    <div class="wm-tab-content">
+
+                        <div class="wm-manual-form">
+                            <h3 class="wm-section-header">Enter Service Address</h3>
+
+                            <!-- Location Name (Optional) -->
+                            <lightning-input
+                                type="text"
+                                label="Location Name (Optional)"
+                                placeholder="e.g., Main Office, Warehouse B"
+                                value={manualLocationName}
+                                onchange={handleManualLocationNameChange}
+                                class="wm-form-input">
+                            </lightning-input>
+
+                            <!-- Street Address -->
+                            <lightning-input
+                                type="text"
+                                label="Street Address"
+                                placeholder="123 Main Street"
+                                value={manualStreet}
+                                onchange={handleManualStreetChange}
+                                required
+                                class="wm-form-input">
+                            </lightning-input>
+
+                            <!-- Address Line 2 (Optional) -->
+                            <lightning-input
+                                type="text"
+                                label="Address Line 2 (Optional)"
+                                placeholder="Suite, Unit, Building, Floor, etc."
+                                value={manualStreet2}
+                                onchange={handleManualStreet2Change}
+                                class="wm-form-input">
+                            </lightning-input>
+
+                            <!-- City, State, ZIP Grid -->
+                            <div class="wm-address-grid">
+                                <lightning-input
+                                    type="text"
+                                    label="City"
+                                    placeholder="City"
+                                    value={manualCity}
+                                    onchange={handleManualCityChange}
+                                    required
+                                    class="wm-form-input wm-grid-city">
+                                </lightning-input>
+
+                                <lightning-combobox
+                                    label="State"
+                                    placeholder="Select State"
+                                    value={manualState}
+                                    options={stateOptions}
+                                    onchange={handleManualStateChange}
+                                    required
+                                    class="wm-form-input wm-grid-state">
+                                </lightning-combobox>
+
+                                <lightning-input
+                                    type="text"
+                                    label="ZIP Code"
+                                    placeholder="12345"
+                                    value={manualZipCode}
+                                    onchange={handleManualZipCodeChange}
+                                    required
+                                    pattern="[0-9]{5}(-[0-9]{4})?"
+                                    message-when-pattern-mismatch="Please enter a valid ZIP code"
+                                    class="wm-form-input wm-grid-zip">
+                                </lightning-input>
+                            </div>
+
+                            <!-- Service Area Validation -->
+                            <template if:true={showManualValidation}>
+                                <div class="wm-validation-section">
+                                    <template if:true={isValidatingManual}>
+                                        <div class="wm-validating">
+                                            <lightning-spinner alternative-text="Validating address" size="small"></lightning-spinner>
+                                            <span>Validating service area...</span>
+                                        </div>
+                                    </template>
+
+                                    <template if:false={isValidatingManual}>
+                                        <template if:true={manualAddressValid}>
+                                            <div class="wm-validation-success">
+                                                <lightning-icon icon-name="utility:success" size="small"></lightning-icon>
+                                                <span>Service available at this address</span>
+                                            </div>
+                                        </template>
+
+                                        <template if:false={manualAddressValid}>
+                                            <div class="wm-validation-warning">
+                                                <lightning-icon icon-name="utility:warning" size="small"></lightning-icon>
+                                                <div>
+                                                    <strong>This address may be outside our service area</strong>
+                                                    <p>You can continue with the quote, but service availability should be confirmed.</p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <!-- Validate and Use Button -->
+                            <div class="wm-form-actions">
+                                <lightning-button
+                                    variant="neutral"
+                                    label="Validate Address"
+                                    onclick={handleValidateManual}
+                                    disabled={isManualValidateDisabled}
+                                    class="wm-btn-secondary">
+                                </lightning-button>
+
+                                <lightning-button
+                                    variant="brand"
+                                    label="Use This Address"
+                                    onclick={handleUseManualAddress}
+                                    disabled={isManualUseDisabled}
+                                    class="wm-btn-primary">
+                                </lightning-button>
+                            </div>
+                        </div>
+                    </div>
+                </lightning-tab>
+            </lightning-tabset>
+        </div>
+
+        <!-- ========== Selected Location Display ========== -->
+        <template if:true={hasSelectedLocation}>
+            <div class="wm-selected-location">
+                <div class="wm-selected-header">
+                    <h3>
+                        <lightning-icon icon-name="utility:success" size="x-small" class="wm-success-icon"></lightning-icon>
+                        Selected Service Location
+                    </h3>
+                    <lightning-button
+                        variant="base"
+                        label="Change"
+                        onclick={handleChangeLocation}
+                        class="wm-change-btn">
+                    </lightning-button>
+                </div>
+
+                <div class="wm-selected-card">
+                    <div class="wm-selected-icon">
+                        <lightning-icon icon-name="utility:location" size="medium"></lightning-icon>
+                    </div>
+                    <div class="wm-selected-details">
+                        <template if:true={selectedLocation.name}>
+                            <div class="wm-selected-name">{selectedLocation.name}</div>
+                        </template>
+                        <div class="wm-selected-address">{selectedLocation.formattedAddress}</div>
+
+                        <div class="wm-selected-meta">
+                            <template if:true={selectedLocation.isServiceable}>
+                                <lightning-badge label="Service Available" class="wm-badge-success"></lightning-badge>
+                            </template>
+                            <template if:false={selectedLocation.isServiceable}>
+                                <lightning-badge label="Outside Service Area" class="wm-badge-warning"></lightning-badge>
+                            </template>
+
+                            <template if:true={selectedLocation.timezone}>
+                                <span class="wm-meta-item">
+                                    <lightning-icon icon-name="utility:world" size="xx-small"></lightning-icon>
+                                    {selectedLocation.timezone}
+                                </span>
+                            </template>
+                        </div>
+
+                        <!-- Access Instructions (Optional) -->
+                        <template if:true={showAccessInstructions}>
+                            <div class="wm-access-section">
+                                <lightning-textarea
+                                    label="Access Instructions (Optional)"
+                                    placeholder="Gate code, building entry, parking instructions, etc."
+                                    value={accessInstructions}
+                                    onchange={handleAccessInstructionsChange}
+                                    max-length="500"
+                                    class="wm-access-input">
+                                </lightning-textarea>
+                            </div>
+                        </template>
+
+                        <template if:false={showAccessInstructions}>
+                            <lightning-button
+                                variant="base"
+                                label="Add Access Instructions"
+                                icon-name="utility:add"
+                                onclick={handleToggleAccessInstructions}
+                                class="wm-btn-link">
+                            </lightning-button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- ========== Error State ========== -->
+        <template if:true={hasError}>
+            <div class="wm-error-state">
+                <lightning-icon icon-name="utility:error" size="small"></lightning-icon>
+                <div class="wm-error-content">
+                    <h4>Unable to Load Locations</h4>
+                    <p>{errorMessage}</p>
+                    <lightning-button
+                        variant="brand"
+                        label="Retry"
+                        onclick={handleRetry}
+                        class="wm-btn-primary">
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>
