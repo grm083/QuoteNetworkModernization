@@ -1,0 +1,448 @@
+/**
+ * WM Cost Bulk Upload Styles
+ * CSV upload interface with preview and validation
+ */
+
+:host {
+    --wm-green-primary: #1c8200;
+    --wm-green-dark: #135B00;
+    --wm-teal-dark: #024731;
+    --wm-sand-light: #F8F8F2;
+
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+
+    display: block;
+}
+
+/* ========== Upload Container ========== */
+.wm-cost-bulk-upload {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+/* ========== Upload Header ========== */
+.wm-upload-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--wm-green-primary);
+}
+
+.wm-upload-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+/* ========== Instructions ========== */
+.wm-instructions {
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: #E8F4FD;
+    border-left: 4px solid #0176D3;
+    border-radius: 0.25rem;
+}
+
+.wm-instruction-content {
+    flex: 1;
+}
+
+.wm-instruction-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #014486;
+    margin: 0 0 var(--spacing-xs) 0;
+}
+
+.wm-instruction-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 0.875rem;
+    color: #014486;
+}
+
+.wm-instruction-list li {
+    margin-bottom: 0.25rem;
+}
+
+/* ========== Template Section ========== */
+.wm-template-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    background-color: var(--wm-sand-light);
+    border: 1px solid #E5E5E5;
+    border-radius: 0.5rem;
+}
+
+.wm-template-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.wm-template-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 0.25rem 0;
+}
+
+.wm-template-description {
+    font-size: 0.8125rem;
+    color: #666;
+    margin: 0;
+}
+
+.wm-download-btn {
+    flex-shrink: 0;
+}
+
+/* ========== Upload Section ========== */
+.wm-upload-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.wm-file-upload {
+    width: 100%;
+}
+
+.wm-uploaded-file {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background-color: rgba(28, 130, 0, 0.1);
+    border: 1px solid var(--wm-green-primary);
+    border-radius: 0.25rem;
+}
+
+.wm-file-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--wm-green-dark);
+    flex: 1;
+}
+
+.wm-file-size {
+    font-size: 0.8125rem;
+    color: #666;
+}
+
+.wm-remove-file {
+    flex-shrink: 0;
+}
+
+/* ========== Processing ========== */
+.wm-processing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg);
+}
+
+.wm-processing-text {
+    font-size: 0.875rem;
+    color: #666;
+    font-weight: 600;
+}
+
+/* ========== Preview Section ========== */
+.wm-preview-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: #FFFFFF;
+    border: 2px solid var(--wm-green-primary);
+    border-radius: 0.5rem;
+}
+
+.wm-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid #E5E5E5;
+}
+
+.wm-preview-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-preview-stats {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.wm-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.wm-stat-valid {
+    color: var(--wm-green-primary);
+}
+
+.wm-stat-error {
+    color: #C23934;
+}
+
+.wm-stat-warning {
+    color: #F39C12;
+}
+
+/* ========== Preview Grid ========== */
+.wm-preview-grid-container {
+    overflow-x: auto;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.wm-preview-grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.wm-preview-grid thead {
+    background-color: var(--wm-sand-light);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.wm-preview-grid th {
+    padding: var(--spacing-sm);
+    text-align: left;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    border-bottom: 2px solid #E5E5E5;
+}
+
+.wm-preview-grid td {
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid #E5E5E5;
+}
+
+/* Grid Columns */
+.wm-col-status { width: 40px; text-align: center; }
+.wm-col-line { width: 40px; }
+.wm-col-service { min-width: 200px; }
+.wm-col-unit-cost { width: 120px; }
+.wm-col-cost-model { width: 100px; }
+.wm-col-uom { width: 120px; }
+.wm-col-message { min-width: 200px; }
+
+/* Row States */
+.wm-row-valid {
+    background-color: rgba(28, 130, 0, 0.05);
+}
+
+.wm-row-warning {
+    background-color: rgba(243, 156, 18, 0.05);
+}
+
+.wm-row-error {
+    background-color: rgba(194, 57, 52, 0.05);
+}
+
+/* Message Classes */
+.wm-message-error {
+    color: #C23934;
+    font-weight: 600;
+}
+
+.wm-message-warning {
+    color: #F39C12;
+    font-weight: 600;
+}
+
+/* ========== Validation Errors ========== */
+.wm-validation-errors {
+    padding: var(--spacing-md);
+    background-color: #FEE;
+    border: 2px solid #C23934;
+    border-radius: 0.5rem;
+}
+
+.wm-errors-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #C23934;
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.wm-error-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.wm-error-item {
+    font-size: 0.8125rem;
+    color: #C23934;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: #FFFFFF;
+    border-radius: 0.25rem;
+}
+
+/* ========== Apply Actions ========== */
+.wm-apply-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid #E5E5E5;
+}
+
+.wm-cancel-btn,
+.wm-apply-btn {
+    flex-shrink: 0;
+}
+
+.wm-apply-btn {
+    --slds-c-button-brand-color-background: var(--wm-green-primary);
+    --slds-c-button-brand-color-background-hover: var(--wm-green-dark);
+}
+
+/* ========== Success Message ========== */
+.wm-success-message {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: rgba(28, 130, 0, 0.1);
+    border: 2px solid var(--wm-green-primary);
+    border-radius: 0.5rem;
+}
+
+.wm-success-content {
+    flex: 1;
+}
+
+.wm-success-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-green-dark);
+    margin: 0 0 0.25rem 0;
+}
+
+.wm-success-text {
+    font-size: 0.875rem;
+    color: var(--wm-green-dark);
+    margin: 0;
+}
+
+/* ========== Error Message ========== */
+.wm-error-message {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: #FEE;
+    border: 1px solid #C23934;
+    border-radius: 0.25rem;
+    color: #C23934;
+    font-size: 0.875rem;
+}
+
+/* ========== Help Section ========== */
+.wm-upload-help {
+    margin-top: var(--spacing-md);
+}
+
+.wm-help-content {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.wm-help-content p {
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.wm-help-content ul {
+    margin: var(--spacing-sm) 0;
+    padding-left: 1.25rem;
+}
+
+.wm-help-content li {
+    margin-bottom: 0.5rem;
+}
+
+.wm-help-content strong {
+    color: var(--wm-teal-dark);
+}
+
+.wm-help-note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    background-color: #E8F4FD;
+    border-left: 4px solid #0176D3;
+    border-radius: 0.25rem;
+    color: #014486;
+    margin-top: var(--spacing-sm);
+}
+
+/* ========== Responsive Design ========== */
+
+/* Mobile (375px - 767px) */
+@media (max-width: 767px) {
+    .wm-template-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-md);
+    }
+
+    .wm-download-btn {
+        width: 100%;
+    }
+
+    .wm-preview-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .wm-preview-stats {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .wm-apply-actions {
+        flex-direction: column;
+    }
+
+    .wm-cancel-btn,
+    .wm-apply-btn {
+        width: 100%;
+    }
+}

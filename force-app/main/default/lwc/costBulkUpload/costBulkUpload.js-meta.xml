@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <isExposed>false</isExposed>
+    <masterLabel>WM Cost Bulk Upload</masterLabel>
+    <description>CSV-based bulk cost entry with validation, preview, and error handling - generates templates and validates data before applying</description>
+</LightningComponentBundle>
