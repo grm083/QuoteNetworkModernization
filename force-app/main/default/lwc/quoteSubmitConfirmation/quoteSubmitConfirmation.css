@@ -1,0 +1,592 @@
+/**
+ * WM Quote Submit Confirmation Styles
+ * Final review, checklist, and submission with success confirmation
+ */
+
+:host {
+    --wm-green-primary: #1c8200;
+    --wm-green-dark: #135B00;
+    --wm-teal-dark: #024731;
+    --wm-sand-light: #F8F8F2;
+
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
+
+    display: block;
+}
+
+/* ========== Container ========== */
+.wm-submit-confirmation {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    position: relative;
+}
+
+/* ========== Page Header ========== */
+.wm-page-header {
+    text-align: center;
+    padding: var(--spacing-lg) 0;
+}
+
+.wm-page-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 0.5rem 0;
+}
+
+.wm-header-subtitle {
+    font-size: 1rem;
+    color: #666;
+    margin: 0;
+}
+
+/* ========== Review Sections ========== */
+.wm-review-section {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.wm-review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: var(--wm-sand-light);
+    border-bottom: 1px solid #E5E5E5;
+}
+
+.wm-review-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-edit-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: none;
+    border: none;
+    padding: 0.5rem 1rem;
+    color: var(--wm-green-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s ease;
+}
+
+.wm-edit-btn:hover {
+    background-color: rgba(28, 130, 0, 0.1);
+}
+
+.wm-review-content {
+    padding: var(--spacing-lg);
+}
+
+/* ========== Review Lists ========== */
+.wm-review-list {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.wm-review-item {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: var(--spacing-md);
+    padding: 0.5rem 0;
+}
+
+.wm-review-item dt {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.wm-review-item dd {
+    font-size: 0.9375rem;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+/* ========== Pricing Section ========== */
+.wm-pricing-section {
+    border: 2px solid var(--wm-green-primary);
+}
+
+.wm-pricing-list {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.wm-pricing-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.wm-pricing-item dt {
+    font-size: 0.9375rem;
+    font-weight: 400;
+    color: #666;
+}
+
+.wm-pricing-item dd {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-discount-item dt,
+.wm-discount-item dd {
+    color: var(--wm-green-primary);
+}
+
+.wm-total-item {
+    border-top: 2px solid var(--wm-green-primary);
+    padding-top: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+}
+
+.wm-total-item dt {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.wm-total-item dd {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--wm-green-primary);
+}
+
+/* ========== Checklist Section ========== */
+.wm-checklist-section {
+    background-color: #FFFFFF;
+    border: 2px solid #0176D3;
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+}
+
+.wm-checklist-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+.wm-checklist-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.wm-checklist-item {
+    padding: var(--spacing-sm);
+    border-radius: 0.25rem;
+    transition: background-color 0.2s ease;
+}
+
+.wm-checklist-complete {
+    background-color: rgba(28, 130, 0, 0.05);
+}
+
+.wm-checklist-input {
+    width: 100%;
+}
+
+.wm-checklist-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background-color: #FFF3CD;
+    border-left: 4px solid #F39C12;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    color: #856404;
+}
+
+/* ========== Terms Section ========== */
+.wm-terms-section {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+}
+
+.wm-terms-header {
+    margin-bottom: var(--spacing-sm);
+}
+
+.wm-terms-checkbox {
+    width: 100%;
+}
+
+.wm-terms-content {
+    padding-left: 2rem;
+}
+
+.wm-terms-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--wm-green-primary);
+    font-size: 0.875rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.wm-terms-link:hover {
+    opacity: 0.8;
+}
+
+/* ========== Options Section ========== */
+.wm-options-section {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+}
+
+.wm-options-section h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+.wm-options-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.wm-option-input {
+    width: 100%;
+}
+
+.wm-email-input {
+    margin-left: 2rem;
+    max-width: 400px;
+}
+
+/* ========== Submit Actions ========== */
+.wm-submit-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: space-between;
+    padding-top: var(--spacing-lg);
+}
+
+.wm-btn-submit {
+    min-width: 200px;
+}
+
+/* ========== Submitting Overlay ========== */
+.wm-submitting-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.wm-submitting-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xxl);
+    background-color: #FFFFFF;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.wm-submitting-text {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+/* ========== Success State ========== */
+.wm-success-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xl);
+    padding: var(--spacing-xxl) var(--spacing-lg);
+    text-align: center;
+}
+
+.wm-success-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 5rem;
+    height: 5rem;
+    background: linear-gradient(135deg, rgba(28, 130, 0, 0.15), rgba(28, 130, 0, 0.05));
+    border-radius: 50%;
+    color: var(--wm-green-primary);
+}
+
+.wm-success-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-success-content {
+    max-width: 600px;
+}
+
+.wm-success-message {
+    font-size: 1.125rem;
+    color: #666;
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+.wm-email-confirmation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--wm-green-primary);
+    margin: 0;
+}
+
+.wm-success-details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-lg);
+    width: 100%;
+    max-width: 800px;
+}
+
+.wm-detail-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg);
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.5rem;
+}
+
+.wm-detail-card lightning-icon {
+    color: var(--wm-green-primary);
+}
+
+.wm-detail-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.wm-detail-label {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.wm-detail-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+}
+
+/* ========== Next Steps ========== */
+.wm-next-steps {
+    width: 100%;
+    max-width: 600px;
+    padding: var(--spacing-lg);
+    background-color: var(--wm-sand-light);
+    border-radius: 0.5rem;
+}
+
+.wm-next-steps h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+.wm-steps-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.wm-steps-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    color: #666;
+}
+
+.wm-steps-list li lightning-icon {
+    color: var(--wm-green-primary);
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+/* ========== Success Actions ========== */
+.wm-success-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+}
+
+/* ========== Badges ========== */
+.wm-badge-success {
+    --slds-c-badge-color-background: var(--wm-green-primary);
+}
+
+.wm-badge-warning {
+    --slds-c-badge-color-background: #F39C12;
+}
+
+/* ========== WM Button Overrides ========== */
+.wm-btn-primary {
+    --slds-c-button-brand-color-background: var(--wm-green-primary);
+    --slds-c-button-brand-color-background-hover: var(--wm-green-dark);
+}
+
+.wm-btn-secondary {
+    --slds-c-button-neutral-color-border: var(--wm-green-primary);
+    --slds-c-button-neutral-text-color: var(--wm-green-primary);
+}
+
+/* ========== Error State ========== */
+.wm-error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xxl);
+    background-color: #FDECEA;
+    border: 2px solid #C23934;
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+.wm-error-state lightning-icon {
+    color: #C23934;
+}
+
+.wm-error-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #C23934;
+    margin: 0 0 0.5rem 0;
+}
+
+.wm-error-content p {
+    font-size: 1rem;
+    color: #721C24;
+    margin: 0 0 var(--spacing-lg) 0;
+    max-width: 500px;
+}
+
+/* ========== Responsive Design ========== */
+
+/* Mobile (375px - 767px) */
+@media (max-width: 767px) {
+    .wm-page-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .wm-review-item {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+    }
+
+    .wm-review-item dt {
+        font-weight: 700;
+    }
+
+    .wm-submit-actions {
+        flex-direction: column;
+    }
+
+    .wm-submit-actions lightning-button {
+        width: 100%;
+    }
+
+    .wm-success-details {
+        grid-template-columns: 1fr;
+    }
+
+    .wm-success-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .wm-success-actions lightning-button {
+        width: 100%;
+    }
+
+    .wm-email-input {
+        margin-left: 0;
+        max-width: 100%;
+    }
+
+    .wm-review-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .wm-edit-btn {
+        align-self: flex-end;
+    }
+}
+
+/* Tablet (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .wm-success-details {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
+    .wm-success-details {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
