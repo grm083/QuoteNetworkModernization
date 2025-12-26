@@ -1,0 +1,606 @@
+/**
+ * WM Quick Quote Wizard Styles
+ * 4-step guided quote creation with WM brand
+ */
+
+:host {
+    /* WM Brand Colors */
+    --wm-green-primary: #1c8200;
+    --wm-green-dark: #135B00;
+    --wm-teal-dark: #024731;
+    --wm-sand-light: #F8F8F2;
+
+    --color-success: #1c8200;
+    --color-warning: #FF8B00;
+    --color-info: #024731;
+
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+
+    display: block;
+}
+
+/* ========== Wizard Container ========== */
+.wm-wizard {
+    display: flex;
+    flex-direction: column;
+    min-height: 600px;
+}
+
+/* ========== Progress Section ========== */
+.wm-wizard-progress {
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background-color: #FFFFFF;
+    border-bottom: 2px solid var(--wm-sand-light);
+}
+
+.wm-progress-header {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.wm-progress-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 0.5rem 0;
+}
+
+.wm-progress-subtitle {
+    font-size: 1rem;
+    color: #4f4f58;
+    margin: 0;
+}
+
+/* ========== Progress Steps ========== */
+.wm-progress-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: var(--spacing-md);
+}
+
+.wm-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.wm-step:hover {
+    opacity: 0.8;
+}
+
+.wm-step-incomplete {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.wm-step-incomplete:hover {
+    opacity: 0.5;
+}
+
+.wm-step-indicator {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #E5E5E5;
+    border: 3px solid transparent;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.wm-step-active .wm-step-indicator {
+    background-color: var(--wm-green-primary);
+    border-color: var(--wm-green-primary);
+    box-shadow: 0 0 0 4px rgba(28, 130, 0, 0.2);
+}
+
+.wm-step-complete .wm-step-indicator {
+    background-color: var(--wm-green-primary);
+    border-color: var(--wm-green-primary);
+}
+
+.wm-step-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #666;
+}
+
+.wm-step-active .wm-step-number,
+.wm-step-complete .wm-step-number {
+    color: #FFFFFF;
+}
+
+.wm-step-check {
+    display: none;
+}
+
+.wm-step-complete .wm-step-check {
+    display: block;
+    color: #FFFFFF;
+}
+
+.wm-step-complete .wm-step-number {
+    display: none;
+}
+
+.wm-step-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #666;
+    text-align: center;
+}
+
+.wm-step-active .wm-step-label {
+    color: var(--wm-teal-dark);
+    font-weight: 700;
+}
+
+.wm-step-complete .wm-step-label {
+    color: var(--wm-green-primary);
+}
+
+/* Step connectors */
+.wm-step-connector {
+    width: 80px;
+    height: 3px;
+    background-color: #E5E5E5;
+    margin: 0 var(--spacing-sm);
+    transition: background-color 0.3s ease;
+}
+
+.wm-step-connector[data-complete="true"] {
+    background-color: var(--wm-green-primary);
+}
+
+/* ========== Progress Bar ========== */
+.wm-progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #E5E5E5;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.wm-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--wm-green-primary), var(--wm-green-dark));
+    transition: width 0.4s ease;
+    border-radius: 4px;
+}
+
+.wm-progress-percentage {
+    font-size: 0.875rem;
+    color: #666;
+    text-align: center;
+    display: block;
+}
+
+/* ========== Wizard Content ========== */
+.wm-wizard-content {
+    flex: 1;
+    padding: var(--spacing-xl);
+    overflow-y: auto;
+}
+
+.wm-step-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.wm-step-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.wm-step-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 0.5rem 0;
+}
+
+.wm-step-header p {
+    font-size: 1rem;
+    color: #666;
+    margin: 0;
+}
+
+/* ========== Selected Product Preview ========== */
+.wm-selected-product {
+    margin-bottom: var(--spacing-xl);
+}
+
+.wm-product-preview {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background-color: var(--wm-sand-light);
+    border-radius: 0.5rem;
+    border-left: 4px solid var(--wm-green-primary);
+}
+
+.wm-product-preview h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 0.25rem 0;
+}
+
+.wm-product-details {
+    font-size: 0.875rem;
+    color: #666;
+    margin: 0;
+}
+
+.wm-change-btn {
+    margin-left: auto;
+}
+
+/* ========== Configuration Sections ========== */
+.wm-config-sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+.wm-config-section {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+}
+
+.wm-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--wm-sand-light);
+}
+
+.wm-section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-section-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: var(--wm-green-primary);
+    color: #FFFFFF;
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+/* ========== Optional Section ========== */
+.wm-optional-section {
+    margin-top: var(--spacing-lg);
+}
+
+.wm-expand-btn {
+    width: 100%;
+    justify-content: space-between;
+}
+
+.wm-optional-content {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background-color: var(--wm-sand-light);
+    border-radius: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+/* ========== Validation ========== */
+.wm-inline-validation {
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: rgba(255, 139, 0, 0.1);
+    border-left: 4px solid var(--color-warning);
+    border-radius: 0.25rem;
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.wm-inline-validation h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: var(--wm-teal-dark);
+}
+
+.wm-inline-validation ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.wm-inline-validation li {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+/* ========== Quote Summary Card ========== */
+.wm-quote-summary-card {
+    background-color: var(--wm-sand-light);
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.wm-quote-summary-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-md) 0;
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid #E5E5E5;
+}
+
+.wm-summary-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--spacing-sm) var(--spacing-lg);
+    font-size: 0.9375rem;
+}
+
+.wm-summary-grid dt {
+    font-weight: 600;
+    color: #666;
+}
+
+.wm-summary-grid dd {
+    margin: 0;
+    color: var(--wm-teal-dark);
+    font-weight: 500;
+}
+
+/* ========== Pricing Section ========== */
+.wm-pricing-section {
+    background-color: #FFFFFF;
+    border: 2px solid var(--wm-green-primary);
+    border-radius: 0.5rem;
+    padding: var(--spacing-xl);
+}
+
+.wm-pricing-cta {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.wm-pricing-cta h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-pricing-cta p {
+    font-size: 1rem;
+    color: #666;
+    margin: 0;
+}
+
+.wm-pricing-btn {
+    min-width: 200px;
+    font-size: 1rem;
+    padding: 0.75rem 2rem;
+}
+
+.wm-pricing-loading {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) 0;
+}
+
+.wm-pricing-loading p {
+    font-size: 1rem;
+    color: #666;
+    margin: 0;
+}
+
+.wm-pricing-result {
+    text-align: center;
+}
+
+.wm-pricing-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.wm-pricing-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-pricing-amount {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.wm-price-label {
+    font-size: 1rem;
+    color: #666;
+}
+
+.wm-price-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--wm-green-primary);
+}
+
+.wm-pricing-note {
+    font-size: 0.875rem;
+    color: #666;
+    margin: 0;
+}
+
+/* ========== Submit Section ========== */
+.wm-submit-section {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xxl) 0;
+}
+
+.wm-submit-section h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-submit-section p {
+    font-size: 1rem;
+    color: #666;
+    margin: 0;
+}
+
+/* ========== Wizard Footer ========== */
+.wm-wizard-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background-color: #FFFFFF;
+    border-top: 1px solid #E5E5E5;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.wm-footer-right {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.wm-nav-btn {
+    min-width: 120px;
+}
+
+.wm-submit-btn {
+    min-width: 160px;
+}
+
+/* ========== WM Button Overrides ========== */
+lightning-button.wm-btn-primary {
+    --slds-c-button-brand-color-background: var(--wm-green-primary);
+    --slds-c-button-brand-color-background-hover: var(--wm-green-dark);
+    --slds-c-button-brand-text-color: #FFFFFF;
+}
+
+/* ========== Responsive Design ========== */
+
+/* Mobile (375px - 767px) */
+@media (max-width: 767px) {
+    .wm-wizard-progress {
+        padding: var(--spacing-md);
+    }
+
+    .wm-progress-title {
+        font-size: 1.25rem;
+    }
+
+    .wm-progress-subtitle {
+        font-size: 0.875rem;
+    }
+
+    .wm-progress-steps {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+    }
+
+    .wm-step {
+        flex: 0 0 auto;
+    }
+
+    .wm-step-label {
+        font-size: 0.75rem;
+        max-width: 60px;
+    }
+
+    .wm-step-connector {
+        width: 40px;
+        margin: 0 0.25rem;
+    }
+
+    .wm-wizard-content {
+        padding: var(--spacing-md);
+    }
+
+    .wm-step-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .wm-config-section {
+        padding: var(--spacing-md);
+    }
+
+    .wm-wizard-footer {
+        padding: var(--spacing-md);
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .wm-footer-right {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .wm-nav-btn,
+    .wm-submit-btn {
+        width: 100%;
+    }
+
+    .wm-summary-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xs);
+    }
+
+    .wm-summary-grid dt {
+        font-weight: 700;
+        margin-top: var(--spacing-sm);
+    }
+
+    .wm-price-value {
+        font-size: 2rem;
+    }
+}

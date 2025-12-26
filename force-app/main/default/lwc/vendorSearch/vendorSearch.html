@@ -1,0 +1,186 @@
+<template>
+    <div class="wm-vendor-search">
+        <!-- Search Header -->
+        <div class="wm-search-header">
+            <lightning-icon icon-name="standard:account" size="small"></lightning-icon>
+            <h3>Vendor Search</h3>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="wm-search-bar">
+            <lightning-input
+                type="search"
+                label="Search Vendors"
+                placeholder="Enter vendor name..."
+                value={searchTerm}
+                onchange={handleSearchChange}
+                class="wm-search-input">
+            </lightning-input>
+
+            <lightning-button
+                label="Search"
+                variant="brand"
+                onclick={handleSearch}
+                disabled={isSearching}
+                class="wm-search-btn">
+            </lightning-button>
+        </div>
+
+        <!-- Filter Options -->
+        <div class="wm-search-filters">
+            <lightning-checkbox-group
+                label="Filter Options"
+                options={filterOptions}
+                value={selectedFilters}
+                onchange={handleFilterChange}>
+            </lightning-checkbox-group>
+
+            <lightning-combobox
+                label="Sort By"
+                value={sortBy}
+                options={sortOptions}
+                onchange={handleSortChange}
+                class="wm-sort-dropdown">
+            </lightning-combobox>
+        </div>
+
+        <!-- Loading Spinner -->
+        <template if:true={isSearching}>
+            <div class="wm-loading">
+                <lightning-spinner alternative-text="Searching vendors..." size="small"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Search Results -->
+        <template if:true={hasResults}>
+            <div class="wm-search-results">
+                <div class="wm-results-header">
+                    <span class="wm-results-count">{resultsCountLabel}</span>
+                    <template if:true={locationName}>
+                        <span class="wm-location-filter">
+                            <lightning-icon icon-name="utility:location" size="xx-small"></lightning-icon>
+                            Near {locationName}
+                        </span>
+                    </template>
+                </div>
+
+                <div class="wm-vendor-list">
+                    <template for:each={vendors} for:item="vendor">
+                        <div key={vendor.id} class="wm-vendor-card" data-vendor-id={vendor.id} onclick={handleVendorClick}>
+                            <!-- Vendor Header -->
+                            <div class="wm-vendor-header">
+                                <div class="wm-vendor-info">
+                                    <h4 class="wm-vendor-name">{vendor.name}</h4>
+                                    <template if:true={vendor.distance}>
+                                        <span class="wm-vendor-distance">
+                                            <lightning-icon icon-name="utility:location" size="xx-small"></lightning-icon>
+                                            {vendor.distance} miles
+                                        </span>
+                                    </template>
+                                </div>
+
+                                <!-- Vendor Score Badge -->
+                                <template if:true={vendor.hasScore}>
+                                    <div class={vendor.scoreClass}>
+                                        <span class="wm-score-value">{vendor.score}</span>
+                                        <span class="wm-score-label">Score</span>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Vendor Details -->
+                            <div class="wm-vendor-details">
+                                <template if:true={vendor.address}>
+                                    <div class="wm-detail-item">
+                                        <lightning-icon icon-name="utility:location" size="xx-small"></lightning-icon>
+                                        <span>{vendor.address}</span>
+                                    </div>
+                                </template>
+
+                                <template if:true={vendor.phone}>
+                                    <div class="wm-detail-item">
+                                        <lightning-icon icon-name="utility:phone" size="xx-small"></lightning-icon>
+                                        <span>{vendor.phone}</span>
+                                    </div>
+                                </template>
+
+                                <template if:true={vendor.email}>
+                                    <div class="wm-detail-item">
+                                        <lightning-icon icon-name="utility:email" size="xx-small"></lightning-icon>
+                                        <span>{vendor.email}</span>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Historical Cost Data -->
+                            <template if:true={vendor.hasHistoricalCost}>
+                                <div class="wm-historical-cost">
+                                    <lightning-icon icon-name="utility:currency" size="xx-small"></lightning-icon>
+                                    <span class="wm-cost-label">Previous Cost:</span>
+                                    <span class="wm-cost-value">{vendor.historicalCost}</span>
+                                    <span class="wm-cost-date">({vendor.costDate})</span>
+                                </div>
+                            </template>
+
+                            <!-- Vendor Capabilities -->
+                            <template if:true={vendor.hasCapabilities}>
+                                <div class="wm-vendor-capabilities">
+                                    <template for:each={vendor.capabilities} for:item="capability">
+                                        <lightning-badge key={capability} label={capability} class="wm-capability-badge"></lightning-badge>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <!-- Selection Button -->
+                            <div class="wm-vendor-actions">
+                                <lightning-button
+                                    label="Select Vendor"
+                                    variant="brand"
+                                    data-vendor-id={vendor.id}
+                                    onclick={handleSelectVendor}
+                                    class="wm-select-vendor-btn">
+                                </lightning-button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+
+        <!-- No Results Message -->
+        <template if:true={showNoResults}>
+            <div class="wm-no-results">
+                <lightning-icon icon-name="utility:search" size="large"></lightning-icon>
+                <p class="wm-no-results-title">No vendors found</p>
+                <p class="wm-no-results-message">Try adjusting your search criteria or filters</p>
+            </div>
+        </template>
+
+        <!-- Error Message -->
+        <template if:true={errorMessage}>
+            <div class="wm-error-message">
+                <lightning-icon icon-name="utility:error" size="small" variant="error"></lightning-icon>
+                <span>{errorMessage}</span>
+            </div>
+        </template>
+
+        <!-- Quick Actions -->
+        <template if:true={showQuickActions}>
+            <div class="wm-quick-actions">
+                <h4>Quick Actions</h4>
+                <lightning-button
+                    label="View All Active Vendors"
+                    variant="neutral"
+                    onclick={handleViewAllVendors}
+                    class="wm-quick-action-btn">
+                </lightning-button>
+                <lightning-button
+                    label="Request New Vendor"
+                    variant="neutral"
+                    onclick={handleRequestNewVendor}
+                    class="wm-quick-action-btn">
+                </lightning-button>
+            </div>
+        </template>
+    </div>
+</template>

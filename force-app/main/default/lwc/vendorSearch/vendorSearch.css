@@ -1,0 +1,379 @@
+/**
+ * WM Vendor Search Styles
+ * Search interface with vendor cards, scoring, and proximity
+ */
+
+:host {
+    --wm-green-primary: #1c8200;
+    --wm-green-dark: #135B00;
+    --wm-teal-dark: #024731;
+    --wm-sand-light: #F8F8F2;
+
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+
+    display: block;
+}
+
+/* ========== Search Container ========== */
+.wm-vendor-search {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+/* ========== Search Header ========== */
+.wm-search-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--wm-green-primary);
+}
+
+.wm-search-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+/* ========== Search Bar ========== */
+.wm-search-bar {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: flex-end;
+}
+
+.wm-search-input {
+    flex: 1;
+}
+
+.wm-search-btn {
+    flex-shrink: 0;
+}
+
+/* ========== Filters ========== */
+.wm-search-filters {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: var(--wm-sand-light);
+    border-radius: 0.25rem;
+}
+
+.wm-sort-dropdown {
+    min-width: 200px;
+}
+
+/* ========== Loading State ========== */
+.wm-loading {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-lg);
+}
+
+/* ========== Search Results ========== */
+.wm-search-results {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.wm-results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid #E5E5E5;
+}
+
+.wm-results-count {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--wm-teal-dark);
+}
+
+.wm-location-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    color: #666;
+}
+
+/* ========== Vendor List ========== */
+.wm-vendor-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: var(--spacing-sm);
+}
+
+/* Custom scrollbar */
+.wm-vendor-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.wm-vendor-list::-webkit-scrollbar-track {
+    background: #F4F6F9;
+    border-radius: 4px;
+}
+
+.wm-vendor-list::-webkit-scrollbar-thumb {
+    background: #C9C9C9;
+    border-radius: 4px;
+}
+
+.wm-vendor-list::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+/* ========== Vendor Card ========== */
+.wm-vendor-card {
+    background-color: #FFFFFF;
+    border: 2px solid #E5E5E5;
+    border-radius: 0.5rem;
+    padding: var(--spacing-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wm-vendor-card:hover {
+    border-color: var(--wm-green-primary);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.wm-vendor-card[data-selected="true"] {
+    border-color: var(--wm-green-primary);
+    background-color: rgba(28, 130, 0, 0.05);
+}
+
+/* ========== Vendor Header ========== */
+.wm-vendor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid #E5E5E5;
+}
+
+.wm-vendor-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.wm-vendor-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-vendor-distance {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    color: #666;
+}
+
+/* ========== Vendor Score Badge ========== */
+.wm-vendor-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    padding: var(--spacing-sm);
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+.wm-score-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.wm-score-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-top: 0.25rem;
+}
+
+.wm-score-high {
+    background-color: rgba(28, 130, 0, 0.15);
+    color: var(--wm-green-dark);
+}
+
+.wm-score-medium {
+    background-color: rgba(243, 156, 18, 0.15);
+    color: #B7791F;
+}
+
+.wm-score-low {
+    background-color: rgba(194, 57, 52, 0.15);
+    color: #C23934;
+}
+
+/* ========== Vendor Details ========== */
+.wm-vendor-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+
+.wm-detail-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 0.875rem;
+    color: #666;
+}
+
+/* ========== Historical Cost ========== */
+.wm-historical-cost {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    background-color: #E8F4FD;
+    border-left: 4px solid #0176D3;
+    border-radius: 0.25rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.wm-cost-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #014486;
+}
+
+.wm-cost-value {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #014486;
+}
+
+.wm-cost-date {
+    font-size: 0.8125rem;
+    color: #014486;
+    opacity: 0.8;
+}
+
+/* ========== Vendor Capabilities ========== */
+.wm-vendor-capabilities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+
+.wm-capability-badge {
+    font-size: 0.75rem;
+}
+
+/* ========== Vendor Actions ========== */
+.wm-vendor-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid #E5E5E5;
+}
+
+.wm-select-vendor-btn {
+    min-width: 150px;
+}
+
+/* ========== No Results ========== */
+.wm-no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg);
+    text-align: center;
+    color: #666;
+}
+
+.wm-no-results-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: var(--spacing-md) 0 var(--spacing-xs) 0;
+}
+
+.wm-no-results-message {
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* ========== Error Message ========== */
+.wm-error-message {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: #FEE;
+    border: 1px solid #C23934;
+    border-radius: 0.25rem;
+    color: #C23934;
+    font-size: 0.875rem;
+}
+
+/* ========== Quick Actions ========== */
+.wm-quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: var(--wm-sand-light);
+    border-radius: 0.5rem;
+}
+
+.wm-quick-actions h4 {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.wm-quick-action-btn {
+    width: 100%;
+    justify-content: flex-start;
+}
+
+/* ========== Responsive Design ========== */
+
+/* Mobile (375px - 767px) */
+@media (max-width: 767px) {
+    .wm-search-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .wm-vendor-header {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .wm-vendor-score {
+        align-self: flex-start;
+    }
+
+    .wm-results-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+    }
+}

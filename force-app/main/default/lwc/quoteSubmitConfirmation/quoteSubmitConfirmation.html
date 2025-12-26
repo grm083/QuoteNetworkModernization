@@ -1,0 +1,442 @@
+<template>
+    <!-- Quote Submit Confirmation Component -->
+    <div class="wm-submit-confirmation">
+
+        <!-- ========== Pre-Submission Review ========== -->
+        <template if:false={isSubmitted}>
+
+            <!-- Page Header -->
+            <div class="wm-page-header">
+                <h2>Review & Submit Quote</h2>
+                <p class="wm-header-subtitle">Please review all details before submitting your quote</p>
+            </div>
+
+            <!-- ========== Quote Summary Sections ========== -->
+
+            <!-- Section 1: Product/Service Details -->
+            <div class="wm-review-section">
+                <div class="wm-review-header">
+                    <h3>
+                        <lightning-icon icon-name="utility:product" size="x-small"></lightning-icon>
+                        Product & Service
+                    </h3>
+                    <button class="wm-edit-btn" onclick={handleEditProduct}>
+                        <lightning-icon icon-name="utility:edit" size="xx-small"></lightning-icon>
+                        Edit
+                    </button>
+                </div>
+
+                <div class="wm-review-content">
+                    <dl class="wm-review-list">
+                        <div class="wm-review-item">
+                            <dt>Service Type:</dt>
+                            <dd>{productName}</dd>
+                        </div>
+                        <div class="wm-review-item">
+                            <dt>Description:</dt>
+                            <dd>{productDescription}</dd>
+                        </div>
+                        <template if:true={containerSize}>
+                            <div class="wm-review-item">
+                                <dt>Container Size:</dt>
+                                <dd>{containerSize}</dd>
+                            </div>
+                        </template>
+                        <template if:true={materialType}>
+                            <div class="wm-review-item">
+                                <dt>Material Type:</dt>
+                                <dd>{materialType}</dd>
+                            </div>
+                        </template>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Section 2: Service Location -->
+            <div class="wm-review-section">
+                <div class="wm-review-header">
+                    <h3>
+                        <lightning-icon icon-name="utility:location" size="x-small"></lightning-icon>
+                        Service Location
+                    </h3>
+                    <button class="wm-edit-btn" onclick={handleEditLocation}>
+                        <lightning-icon icon-name="utility:edit" size="xx-small"></lightning-icon>
+                        Edit
+                    </button>
+                </div>
+
+                <div class="wm-review-content">
+                    <dl class="wm-review-list">
+                        <div class="wm-review-item">
+                            <dt>Address:</dt>
+                            <dd>{locationAddress}</dd>
+                        </div>
+                        <template if:true={accessInstructions}>
+                            <div class="wm-review-item">
+                                <dt>Access Instructions:</dt>
+                                <dd>{accessInstructions}</dd>
+                            </div>
+                        </template>
+                        <div class="wm-review-item">
+                            <dt>Service Area:</dt>
+                            <dd>
+                                <template if:true={isServiceable}>
+                                    <lightning-badge label="Available" class="wm-badge-success"></lightning-badge>
+                                </template>
+                                <template if:false={isServiceable}>
+                                    <lightning-badge label="May Require Confirmation" class="wm-badge-warning"></lightning-badge>
+                                </template>
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Section 3: Service Schedule -->
+            <div class="wm-review-section">
+                <div class="wm-review-header">
+                    <h3>
+                        <lightning-icon icon-name="utility:event" size="x-small"></lightning-icon>
+                        Service Schedule
+                    </h3>
+                    <button class="wm-edit-btn" onclick={handleEditSchedule}>
+                        <lightning-icon icon-name="utility:edit" size="xx-small"></lightning-icon>
+                        Edit
+                    </button>
+                </div>
+
+                <div class="wm-review-content">
+                    <dl class="wm-review-list">
+                        <div class="wm-review-item">
+                            <dt>Service Type:</dt>
+                            <dd>{scheduleType}</dd>
+                        </div>
+                        <template if:true={isOneTimeService}>
+                            <div class="wm-review-item">
+                                <dt>Service Date:</dt>
+                                <dd>{serviceDate}</dd>
+                            </div>
+                        </template>
+                        <template if:true={isRecurringService}>
+                            <div class="wm-review-item">
+                                <dt>Schedule:</dt>
+                                <dd>{scheduleDescription}</dd>
+                            </div>
+                            <div class="wm-review-item">
+                                <dt>First Service:</dt>
+                                <dd>{firstServiceDate}</dd>
+                            </div>
+                            <div class="wm-review-item">
+                                <dt>Total Services:</dt>
+                                <dd>{totalServices}</dd>
+                            </div>
+                        </template>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Section 4: Pricing Summary -->
+            <div class="wm-review-section wm-pricing-section">
+                <div class="wm-review-header">
+                    <h3>
+                        <lightning-icon icon-name="utility:money" size="x-small"></lightning-icon>
+                        Pricing Summary
+                    </h3>
+                    <button class="wm-edit-btn" onclick={handleEditPricing}>
+                        <lightning-icon icon-name="utility:edit" size="xx-small"></lightning-icon>
+                        Edit
+                    </button>
+                </div>
+
+                <div class="wm-review-content">
+                    <dl class="wm-pricing-list">
+                        <div class="wm-pricing-item">
+                            <dt>Subtotal:</dt>
+                            <dd>{formattedSubtotal}</dd>
+                        </div>
+                        <template if:true={hasDiscounts}>
+                            <div class="wm-pricing-item wm-discount-item">
+                                <dt>Total Discounts:</dt>
+                                <dd>-{formattedDiscounts}</dd>
+                            </div>
+                        </template>
+                        <template if:true={hasTax}>
+                            <div class="wm-pricing-item">
+                                <dt>Tax ({taxRate}%):</dt>
+                                <dd>{formattedTax}</dd>
+                            </div>
+                        </template>
+                        <div class="wm-pricing-item wm-total-item">
+                            <dt>Total Quote Value:</dt>
+                            <dd>{formattedTotal}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- ========== Review Checklist ========== -->
+            <div class="wm-checklist-section">
+                <h3 class="wm-checklist-header">
+                    <lightning-icon icon-name="utility:checkin" size="x-small"></lightning-icon>
+                    Pre-Submission Checklist
+                </h3>
+
+                <div class="wm-checklist-items">
+                    <div class={checklistItem1Class}>
+                        <lightning-input
+                            type="checkbox"
+                            label="I have reviewed all service details and they are correct"
+                            checked={checklist1}
+                            onchange={handleChecklistChange}
+                            data-checklist="1"
+                            class="wm-checklist-input">
+                        </lightning-input>
+                    </div>
+
+                    <div class={checklistItem2Class}>
+                        <lightning-input
+                            type="checkbox"
+                            label="I have verified the service location and access instructions"
+                            checked={checklist2}
+                            onchange={handleChecklistChange}
+                            data-checklist="2"
+                            class="wm-checklist-input">
+                        </lightning-input>
+                    </div>
+
+                    <div class={checklistItem3Class}>
+                        <lightning-input
+                            type="checkbox"
+                            label="I have confirmed the service schedule meets customer needs"
+                            checked={checklist3}
+                            onchange={handleChecklistChange}
+                            data-checklist="3"
+                            class="wm-checklist-input">
+                        </lightning-input>
+                    </div>
+
+                    <div class={checklistItem4Class}>
+                        <lightning-input
+                            type="checkbox"
+                            label="I have reviewed the pricing and it is accurate"
+                            checked={checklist4}
+                            onchange={handleChecklistChange}
+                            data-checklist="4"
+                            class="wm-checklist-input">
+                        </lightning-input>
+                    </div>
+                </div>
+
+                <template if:false={allChecklistComplete}>
+                    <div class="wm-checklist-warning">
+                        <lightning-icon icon-name="utility:warning" size="xx-small"></lightning-icon>
+                        <span>Please complete all checklist items to proceed</span>
+                    </div>
+                </template>
+            </div>
+
+            <!-- ========== Terms and Conditions ========== -->
+            <div class="wm-terms-section">
+                <div class="wm-terms-header">
+                    <lightning-input
+                        type="checkbox"
+                        label="I agree to the terms and conditions"
+                        checked={termsAccepted}
+                        onchange={handleTermsChange}
+                        required
+                        class="wm-terms-checkbox">
+                    </lightning-input>
+                </div>
+
+                <div class="wm-terms-content">
+                    <button class="wm-terms-link" onclick={handleViewTerms}>
+                        View Terms and Conditions
+                    </button>
+                </div>
+            </div>
+
+            <!-- ========== Submission Options ========== -->
+            <div class="wm-options-section">
+                <h3>Additional Options</h3>
+
+                <div class="wm-options-list">
+                    <lightning-input
+                        type="checkbox"
+                        label="Email quote to customer"
+                        checked={emailToCustomer}
+                        onchange={handleEmailOptionChange}
+                        class="wm-option-input">
+                    </lightning-input>
+
+                    <template if:true={emailToCustomer}>
+                        <lightning-input
+                            type="email"
+                            label="Customer Email"
+                            value={customerEmail}
+                            onchange={handleCustomerEmailChange}
+                            placeholder="customer@example.com"
+                            required
+                            class="wm-email-input">
+                        </lightning-input>
+                    </template>
+
+                    <lightning-input
+                        type="checkbox"
+                        label="Save as draft (do not submit)"
+                        checked={saveAsDraft}
+                        onchange={handleDraftOptionChange}
+                        class="wm-option-input">
+                    </lightning-input>
+                </div>
+            </div>
+
+            <!-- ========== Actions ========== -->
+            <div class="wm-submit-actions">
+                <lightning-button
+                    variant="neutral"
+                    label="Go Back"
+                    icon-name="utility:back"
+                    onclick={handleGoBack}
+                    class="wm-btn-secondary">
+                </lightning-button>
+
+                <template if:true={saveAsDraft}>
+                    <lightning-button
+                        variant="brand"
+                        label="Save Draft"
+                        icon-name="utility:save"
+                        onclick={handleSaveDraft}
+                        class="wm-btn-primary">
+                    </lightning-button>
+                </template>
+
+                <template if:false={saveAsDraft}>
+                    <lightning-button
+                        variant="brand"
+                        label="Submit Quote"
+                        icon-name="utility:check"
+                        onclick={handleSubmitQuote}
+                        disabled={isSubmitDisabled}
+                        class="wm-btn-primary wm-btn-submit">
+                    </lightning-button>
+                </template>
+            </div>
+
+            <!-- ========== Submitting State ========== -->
+            <template if:true={isSubmitting}>
+                <div class="wm-submitting-overlay">
+                    <div class="wm-submitting-content">
+                        <lightning-spinner alternative-text="Submitting quote" size="large"></lightning-spinner>
+                        <p class="wm-submitting-text">Submitting your quote...</p>
+                    </div>
+                </div>
+            </template>
+
+        </template>
+
+        <!-- ========== Success State ========== -->
+        <template if:true={isSubmitted}>
+            <div class="wm-success-state">
+                <div class="wm-success-icon">
+                    <lightning-icon icon-name="utility:success" size="large"></lightning-icon>
+                </div>
+
+                <h2 class="wm-success-title">Quote Submitted Successfully!</h2>
+
+                <div class="wm-success-content">
+                    <p class="wm-success-message">
+                        Your quote <strong>#{submittedQuoteNumber}</strong> has been submitted and is now being processed.
+                    </p>
+
+                    <template if:true={emailSent}>
+                        <p class="wm-email-confirmation">
+                            <lightning-icon icon-name="utility:email" size="xx-small"></lightning-icon>
+                            A confirmation email has been sent to {customerEmail}
+                        </p>
+                    </template>
+                </div>
+
+                <div class="wm-success-details">
+                    <div class="wm-detail-card">
+                        <lightning-icon icon-name="utility:number_input" size="small"></lightning-icon>
+                        <div class="wm-detail-content">
+                            <div class="wm-detail-label">Quote Number</div>
+                            <div class="wm-detail-value">{submittedQuoteNumber}</div>
+                        </div>
+                    </div>
+
+                    <div class="wm-detail-card">
+                        <lightning-icon icon-name="utility:date_time" size="small"></lightning-icon>
+                        <div class="wm-detail-content">
+                            <div class="wm-detail-label">Submitted</div>
+                            <div class="wm-detail-value">{submittedDateTime}</div>
+                        </div>
+                    </div>
+
+                    <div class="wm-detail-card">
+                        <lightning-icon icon-name="utility:money" size="small"></lightning-icon>
+                        <div class="wm-detail-content">
+                            <div class="wm-detail-label">Total Value</div>
+                            <div class="wm-detail-value">{formattedTotal}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Next Steps -->
+                <div class="wm-next-steps">
+                    <h3>What's Next?</h3>
+                    <ul class="wm-steps-list">
+                        <li>
+                            <lightning-icon icon-name="utility:check" size="xx-small"></lightning-icon>
+                            <span>Your quote will be reviewed by our team</span>
+                        </li>
+                        <li>
+                            <lightning-icon icon-name="utility:check" size="xx-small"></lightning-icon>
+                            <span>You'll receive a confirmation email with quote details</span>
+                        </li>
+                        <li>
+                            <lightning-icon icon-name="utility:check" size="xx-small"></lightning-icon>
+                            <span>Track quote status in the Quotes tab</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Success Actions -->
+                <div class="wm-success-actions">
+                    <lightning-button
+                        variant="neutral"
+                        label="View Quote"
+                        icon-name="utility:preview"
+                        onclick={handleViewQuote}
+                        class="wm-btn-secondary">
+                    </lightning-button>
+
+                    <lightning-button
+                        variant="brand"
+                        label="Create Another Quote"
+                        icon-name="utility:add"
+                        onclick={handleCreateAnother}
+                        class="wm-btn-primary">
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- ========== Error State ========== -->
+        <template if:true={hasError}>
+            <div class="wm-error-state">
+                <lightning-icon icon-name="utility:error" size="large"></lightning-icon>
+                <div class="wm-error-content">
+                    <h3>Submission Failed</h3>
+                    <p>{errorMessage}</p>
+                    <lightning-button
+                        variant="brand"
+                        label="Try Again"
+                        onclick={handleRetry}
+                        class="wm-btn-primary">
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>

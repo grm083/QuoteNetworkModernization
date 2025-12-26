@@ -1,0 +1,239 @@
+<template>
+    <div class="wm-cost-bulk-upload">
+        <!-- Upload Header -->
+        <div class="wm-upload-header">
+            <lightning-icon icon-name="utility:upload" size="small"></lightning-icon>
+            <h3>Bulk Cost Upload</h3>
+        </div>
+
+        <!-- Instructions -->
+        <div class="wm-instructions">
+            <lightning-icon icon-name="utility:info" size="x-small"></lightning-icon>
+            <div class="wm-instruction-content">
+                <p class="wm-instruction-title">Upload costs via CSV file</p>
+                <ul class="wm-instruction-list">
+                    <li>Download the template to ensure correct format</li>
+                    <li>Fill in Unit Cost, Cost Model (STD/STP/REB), and Unit of Measure</li>
+                    <li>Preview and validate before applying to quote lines</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Template Download -->
+        <div class="wm-template-section">
+            <div class="wm-template-info">
+                <lightning-icon icon-name="standard:document" size="small"></lightning-icon>
+                <div>
+                    <h4 class="wm-template-title">CSV Template</h4>
+                    <p class="wm-template-description">Download the pre-filled template with your quote lines</p>
+                </div>
+            </div>
+            <lightning-button
+                label="Download Template"
+                variant="brand"
+                icon-name="utility:download"
+                onclick={handleDownloadTemplate}
+                disabled={isProcessing}
+                class="wm-download-btn">
+            </lightning-button>
+        </div>
+
+        <!-- File Upload -->
+        <div class="wm-upload-section">
+            <lightning-file-upload
+                label="Upload Cost CSV"
+                name="costCsv"
+                accept=".csv"
+                multiple={false}
+                onuploadfinished={handleUploadFinished}
+                disabled={isProcessing}
+                class="wm-file-upload">
+            </lightning-file-upload>
+
+            <template if:true={uploadedFileName}>
+                <div class="wm-uploaded-file">
+                    <lightning-icon icon-name="doctype:csv" size="small"></lightning-icon>
+                    <span class="wm-file-name">{uploadedFileName}</span>
+                    <span class="wm-file-size">({uploadedFileSize})</span>
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        variant="bare"
+                        onclick={handleClearFile}
+                        alternative-text="Remove file"
+                        class="wm-remove-file">
+                    </lightning-button-icon>
+                </div>
+            </template>
+        </div>
+
+        <!-- Processing Spinner -->
+        <template if:true={isProcessing}>
+            <div class="wm-processing">
+                <lightning-spinner alternative-text="Processing CSV..." size="small"></lightning-spinner>
+                <span class="wm-processing-text">{processingMessage}</span>
+            </div>
+        </template>
+
+        <!-- Preview Data -->
+        <template if:true={hasPreviewData}>
+            <div class="wm-preview-section">
+                <div class="wm-preview-header">
+                    <h4 class="wm-preview-title">
+                        <lightning-icon icon-name="utility:preview" size="x-small"></lightning-icon>
+                        Preview ({previewRowCount} lines)
+                    </h4>
+                    <div class="wm-preview-stats">
+                        <span class="wm-stat wm-stat-valid">
+                            <lightning-icon icon-name="utility:success" size="xx-small"></lightning-icon>
+                            {validRowCount} Valid
+                        </span>
+                        <span class="wm-stat wm-stat-error">
+                            <lightning-icon icon-name="utility:error" size="xx-small"></lightning-icon>
+                            {errorRowCount} Errors
+                        </span>
+                        <span class="wm-stat wm-stat-warning">
+                            <lightning-icon icon-name="utility:warning" size="xx-small"></lightning-icon>
+                            {warningRowCount} Warnings
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Preview Grid -->
+                <div class="wm-preview-grid-container">
+                    <table class="wm-preview-grid">
+                        <thead>
+                            <tr>
+                                <th class="wm-col-status">Status</th>
+                                <th class="wm-col-line">#</th>
+                                <th class="wm-col-service">Service</th>
+                                <th class="wm-col-unit-cost">Unit Cost</th>
+                                <th class="wm-col-cost-model">Cost Model</th>
+                                <th class="wm-col-uom">UOM</th>
+                                <th class="wm-col-message">Validation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={previewData} for:item="row">
+                                <tr key={row.lineNumber} class={row.rowClass}>
+                                    <td class="wm-col-status">
+                                        <template if:true={row.isValid}>
+                                            <lightning-icon icon-name="utility:success" size="x-small" variant="success"></lightning-icon>
+                                        </template>
+                                        <template if:true={row.hasError}>
+                                            <lightning-icon icon-name="utility:error" size="x-small" variant="error"></lightning-icon>
+                                        </template>
+                                        <template if:true={row.hasWarning}>
+                                            <lightning-icon icon-name="utility:warning" size="x-small" variant="warning"></lightning-icon>
+                                        </template>
+                                    </td>
+                                    <td class="wm-col-line">{row.lineNumber}</td>
+                                    <td class="wm-col-service">{row.serviceName}</td>
+                                    <td class="wm-col-unit-cost">{row.unitCostFormatted}</td>
+                                    <td class="wm-col-cost-model">
+                                        <lightning-badge label={row.costModel} class="wm-cost-model-badge"></lightning-badge>
+                                    </td>
+                                    <td class="wm-col-uom">{row.unitOfMeasure}</td>
+                                    <td class="wm-col-message">
+                                        <template if:true={row.validationMessage}>
+                                            <span class={row.messageClass}>{row.validationMessage}</span>
+                                        </template>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Validation Errors Detail -->
+                <template if:true={hasValidationErrors}>
+                    <div class="wm-validation-errors">
+                        <h5 class="wm-errors-title">
+                            <lightning-icon icon-name="utility:error" size="x-small" variant="error"></lightning-icon>
+                            Validation Errors
+                        </h5>
+                        <ul class="wm-error-list">
+                            <template for:each={validationErrors} for:item="error">
+                                <li key={error.key} class="wm-error-item">
+                                    <strong>Line {error.lineNumber}:</strong> {error.message}
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </template>
+
+                <!-- Apply Actions -->
+                <div class="wm-apply-actions">
+                    <lightning-button
+                        label="Cancel Upload"
+                        variant="neutral"
+                        onclick={handleCancelUpload}
+                        disabled={isProcessing}
+                        class="wm-cancel-btn">
+                    </lightning-button>
+
+                    <lightning-button
+                        label={applyButtonLabel}
+                        variant="brand"
+                        icon-name="utility:check"
+                        onclick={handleApplyCosts}
+                        disabled={cannotApply}
+                        class="wm-apply-btn">
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+
+        <!-- Success Message -->
+        <template if:true={showSuccessMessage}>
+            <div class="wm-success-message">
+                <lightning-icon icon-name="utility:success" size="small" variant="success"></lightning-icon>
+                <div class="wm-success-content">
+                    <h4 class="wm-success-title">Costs Applied Successfully!</h4>
+                    <p class="wm-success-text">{successMessage}</p>
+                </div>
+            </div>
+        </template>
+
+        <!-- Error Message -->
+        <template if:true={errorMessage}>
+            <div class="wm-error-message">
+                <lightning-icon icon-name="utility:error" size="small" variant="error"></lightning-icon>
+                <span>{errorMessage}</span>
+            </div>
+        </template>
+
+        <!-- Help Section -->
+        <div class="wm-upload-help">
+            <lightning-accordion allow-multiple-sections-open>
+                <lightning-accordion-section label="CSV Format Requirements" name="format">
+                    <div class="wm-help-content">
+                        <p><strong>Required Columns:</strong></p>
+                        <ul>
+                            <li><strong>Line Number:</strong> The quote line number (1, 2, 3, etc.)</li>
+                            <li><strong>Service Name:</strong> Service description (read-only, for reference)</li>
+                            <li><strong>Unit Cost:</strong> Vendor cost in decimal format (e.g., 125.50)</li>
+                            <li><strong>Cost Model:</strong> One of: STD (Standard), STP (Stepped), REB (Rebate)</li>
+                            <li><strong>Unit of Measure:</strong> Cost UOM (e.g., Per Month, Per Service, Per Ton)</li>
+                        </ul>
+                        <p class="wm-help-note">
+                            <lightning-icon icon-name="utility:info" size="xx-small"></lightning-icon>
+                            <strong>Important:</strong> Line numbers must match your quote lines exactly. Download the template to get the correct format.
+                        </p>
+                    </div>
+                </lightning-accordion-section>
+
+                <lightning-accordion-section label="Common Errors" name="errors">
+                    <div class="wm-help-content">
+                        <ul>
+                            <li><strong>Invalid Line Number:</strong> Line number doesn't exist in quote</li>
+                            <li><strong>Missing Unit Cost:</strong> Unit cost is required for all lines</li>
+                            <li><strong>Invalid Cost Model:</strong> Must be STD, STP, or REB</li>
+                            <li><strong>Invalid Unit Cost:</strong> Must be a valid positive number</li>
+                            <li><strong>Missing UOM:</strong> Unit of Measure is required</li>
+                        </ul>
+                    </div>
+                </lightning-accordion-section>
+            </lightning-accordion>
+        </div>
+    </div>
+</template>

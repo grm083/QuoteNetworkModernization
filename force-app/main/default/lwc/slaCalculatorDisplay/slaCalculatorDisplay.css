@@ -1,0 +1,448 @@
+/**
+ * WM SLA Calculator Display Styles
+ * Transparent SLA calculation with Phase 11 service integration
+ */
+
+:host {
+    --wm-green-primary: #1c8200;
+    --wm-green-dark: #135B00;
+    --wm-teal-dark: #024731;
+    --wm-sand-light: #F8F8F2;
+
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+
+    display: block;
+}
+
+/* ========== Container ========== */
+.wm-sla-calculator {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+/* ========== Loading State ========== */
+.wm-calculating-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl);
+    background-color: var(--wm-sand-light);
+    border-radius: 0.5rem;
+}
+
+.wm-calculating-text {
+    font-size: 1rem;
+    color: #666;
+    margin: 0;
+}
+
+/* ========== SLA Result Card ========== */
+.wm-sla-result-card {
+    background-color: #FFFFFF;
+    border: 2px solid var(--wm-green-primary);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+/* ========== Main SLA Display ========== */
+.wm-sla-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: linear-gradient(135deg, rgba(28, 130, 0, 0.05), rgba(28, 130, 0, 0.02));
+}
+
+.wm-sla-icon {
+    flex-shrink: 0;
+}
+
+.wm-sla-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.wm-sla-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+.wm-sla-date {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-sla-time {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--wm-green-primary);
+    margin: 0;
+}
+
+.wm-sla-actions {
+    flex-shrink: 0;
+}
+
+.wm-details-btn {
+    --slds-c-button-color-border: var(--wm-green-primary);
+}
+
+/* ========== Calculation Details ========== */
+.wm-calculation-details {
+    border-top: 1px solid #E5E5E5;
+    padding: var(--spacing-lg);
+    background-color: var(--wm-sand-light);
+}
+
+.wm-details-header h4 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+/* ========== Calculation Steps ========== */
+.wm-calculation-steps {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.wm-calc-step {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background-color: #FFFFFF;
+    border-radius: 0.25rem;
+}
+
+.wm-step-icon {
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.wm-icon-neutral {
+    color: #666;
+}
+
+.wm-icon-success {
+    color: var(--wm-green-primary);
+}
+
+.wm-icon-info {
+    color: #0176D3;
+}
+
+.wm-step-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.wm-step-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.wm-step-value {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--wm-teal-dark);
+}
+
+/* Highlighted Steps (Entitlement) */
+.wm-step-highlight {
+    border-left: 3px solid var(--wm-green-primary);
+    background: linear-gradient(90deg, rgba(28, 130, 0, 0.08), rgba(28, 130, 0, 0.02));
+}
+
+/* Result Step */
+.wm-step-result {
+    border: 2px solid var(--wm-green-primary);
+    background: linear-gradient(135deg, rgba(28, 130, 0, 0.1), rgba(28, 130, 0, 0.05));
+}
+
+.wm-result-emphasis {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-green-primary);
+}
+
+/* ========== Entitlement Details ========== */
+.wm-entitlement-details {
+    margin-top: var(--spacing-sm);
+    padding-left: calc(var(--spacing-sm) + 20px); /* Align with icon offset */
+}
+
+.wm-expand-btn-sm {
+    margin-bottom: var(--spacing-sm);
+}
+
+.wm-entitlement-info {
+    padding: var(--spacing-md);
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.25rem;
+}
+
+.wm-info-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--spacing-sm) var(--spacing-md);
+    margin: 0;
+}
+
+.wm-info-grid dt {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.wm-info-grid dd {
+    font-size: 0.875rem;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+/* ========== Alternatives Section ========== */
+.wm-alternatives-section {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.25rem;
+}
+
+.wm-alternatives-section h5 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+.wm-alternatives-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.wm-alternative-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+    border: 1px solid #E5E5E5;
+    border-radius: 0.25rem;
+}
+
+.wm-alt-content {
+    flex: 1;
+}
+
+.wm-alt-date {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--wm-teal-dark);
+}
+
+.wm-alt-details {
+    font-size: 0.8125rem;
+    color: #666;
+}
+
+.wm-alt-btn {
+    flex-shrink: 0;
+}
+
+/* ========== Date Input Section ========== */
+.wm-date-input-section {
+    padding: var(--spacing-lg);
+    border-top: 1px solid #E5E5E5;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.wm-date-picker,
+.wm-time-picker {
+    width: 100%;
+}
+
+/* ========== Warning Banner ========== */
+.wm-warning-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: #FEF5E7;
+    border: 2px solid #F39C12;
+    border-radius: 0.5rem;
+    margin-top: var(--spacing-md);
+}
+
+.wm-warning-content {
+    flex: 1;
+}
+
+.wm-warning-content h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #B7791F;
+    margin: 0 0 0.25rem 0;
+}
+
+.wm-warning-content p {
+    font-size: 0.875rem;
+    color: #856404;
+    margin: 0;
+}
+
+/* ========== Override Section ========== */
+.wm-override-section {
+    background-color: #FFF3CD;
+    border: 2px dashed #F39C12;
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+}
+
+.wm-override-header {
+    margin-bottom: var(--spacing-md);
+}
+
+.wm-override-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: #FFFFFF;
+    border-radius: 0.25rem;
+}
+
+.wm-override-input,
+.wm-override-textarea {
+    width: 100%;
+}
+
+.wm-override-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: var(--spacing-sm);
+    background-color: #FFF3CD;
+    border-radius: 0.25rem;
+    font-size: 0.8125rem;
+    color: #856404;
+}
+
+/* ========== Error State ========== */
+.wm-error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl);
+    background-color: #FDECEA;
+    border: 2px solid #C23934;
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+.wm-error-state h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #C23934;
+    margin: 0;
+}
+
+.wm-error-message {
+    font-size: 0.9375rem;
+    color: #721C24;
+    margin: 0;
+    max-width: 500px;
+}
+
+/* ========== WM Button Overrides ========== */
+lightning-button.wm-btn-primary {
+    --slds-c-button-brand-color-background: var(--wm-green-primary);
+    --slds-c-button-brand-color-background-hover: var(--wm-green-dark);
+}
+
+/* ========== Responsive Design ========== */
+
+/* Mobile (375px - 767px) */
+@media (max-width: 767px) {
+    .wm-sla-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .wm-sla-actions {
+        align-self: flex-end;
+    }
+
+    .wm-date-input-section {
+        grid-template-columns: 1fr;
+    }
+
+    .wm-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wm-info-grid dt {
+        margin-top: var(--spacing-sm);
+    }
+
+    .wm-info-grid dt:first-child {
+        margin-top: 0;
+    }
+
+    .wm-alternative-option {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .wm-alt-btn {
+        width: 100%;
+    }
+}
+
+/* Tablet (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .wm-date-input-section {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
+    .wm-calculation-steps {
+        padding: var(--spacing-sm);
+    }
+
+    .wm-info-grid {
+        grid-template-columns: minmax(150px, auto) 1fr;
+    }
+}

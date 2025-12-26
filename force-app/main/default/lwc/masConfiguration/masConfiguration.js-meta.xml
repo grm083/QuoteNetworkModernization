@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <isExposed>false</isExposed>
+    <masterLabel>WM MAS Configuration</masterLabel>
+    <description>Configuration interface for 22 MAS fields with auto-population from MAS_Setup_Detail__c - supports field validation and bulk operations</description>
+</LightningComponentBundle>

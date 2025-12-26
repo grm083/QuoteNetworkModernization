@@ -1,0 +1,339 @@
+<template>
+    <!-- Pricing Preview Component -->
+    <div class="wm-pricing-preview">
+
+        <!-- ========== Loading State ========== -->
+        <template if:true={isLoadingPricing}>
+            <div class="wm-loading-state">
+                <lightning-spinner alternative-text="Loading pricing" size="medium"></lightning-spinner>
+                <p class="wm-loading-text">Calculating pricing...</p>
+            </div>
+        </template>
+
+        <!-- ========== Pricing Content ========== -->
+        <template if:false={isLoadingPricing}>
+
+            <!-- Quote Summary Header -->
+            <div class="wm-quote-summary-header">
+                <div class="wm-summary-title">
+                    <h2>Quote Preview</h2>
+                    <lightning-badge label={quoteStatus} class="wm-status-badge"></lightning-badge>
+                </div>
+                <div class="wm-summary-meta">
+                    <span class="wm-meta-item">
+                        <lightning-icon icon-name="utility:date_input" size="xx-small"></lightning-icon>
+                        {formattedQuoteDate}
+                    </span>
+                    <span class="wm-meta-item">
+                        <lightning-icon icon-name="utility:number_input" size="xx-small"></lightning-icon>
+                        Quote #{quoteNumber}
+                    </span>
+                </div>
+            </div>
+
+            <!-- ========== Line Items Section ========== -->
+            <div class="wm-line-items-section">
+                <div class="wm-section-header">
+                    <h3>
+                        <lightning-icon icon-name="utility:product" size="x-small"></lightning-icon>
+                        Service Details
+                    </h3>
+                </div>
+
+                <div class="wm-line-items-list">
+                    <template for:each={lineItems} for:item="line">
+                        <div key={line.id} class="wm-line-item-card">
+
+                            <!-- Line Item Header -->
+                            <div class="wm-line-header">
+                                <div class="wm-line-product">
+                                    <div class="wm-product-icon">
+                                        <lightning-icon icon-name="utility:cart" size="small"></lightning-icon>
+                                    </div>
+                                    <div class="wm-product-info">
+                                        <div class="wm-product-name">{line.productName}</div>
+                                        <div class="wm-product-details">{line.productDescription}</div>
+                                    </div>
+                                </div>
+                                <div class="wm-line-total">
+                                    <span class="wm-total-amount">{line.formattedTotal}</span>
+                                    <template if:true={line.hasDiscount}>
+                                        <span class="wm-original-price">{line.formattedOriginalPrice}</span>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Line Item Details (Expandable) -->
+                            <div class="wm-line-details">
+                                <button class="wm-expand-btn" onclick={handleToggleLineDetails} data-line-id={line.id}>
+                                    <lightning-icon icon-name={line.detailsIcon} size="xx-small"></lightning-icon>
+                                    <span>{line.detailsLabel}</span>
+                                </button>
+
+                                <template if:true={line.showDetails}>
+                                    <div class="wm-details-content">
+
+                                        <!-- Pricing Breakdown -->
+                                        <div class="wm-pricing-breakdown">
+                                            <h4>Pricing Breakdown</h4>
+
+                                            <dl class="wm-breakdown-list">
+                                                <div class="wm-breakdown-item">
+                                                    <dt>Unit Price:</dt>
+                                                    <dd>{line.formattedUnitPrice}</dd>
+                                                </div>
+
+                                                <div class="wm-breakdown-item">
+                                                    <dt>Quantity:</dt>
+                                                    <dd>{line.quantity}</dd>
+                                                </div>
+
+                                                <template if:true={line.isRecurring}>
+                                                    <div class="wm-breakdown-item">
+                                                        <dt>Frequency:</dt>
+                                                        <dd>{line.frequency}</dd>
+                                                    </div>
+
+                                                    <div class="wm-breakdown-item">
+                                                        <dt>Total Services:</dt>
+                                                        <dd>{line.totalServices}</dd>
+                                                    </div>
+                                                </template>
+
+                                                <div class="wm-breakdown-item wm-subtotal">
+                                                    <dt>Subtotal:</dt>
+                                                    <dd>{line.formattedSubtotal}</dd>
+                                                </div>
+
+                                                <template if:true={line.hasDiscount}>
+                                                    <div class="wm-breakdown-item wm-discount">
+                                                        <dt>
+                                                            <lightning-icon icon-name="utility:percent" size="xx-small"></lightning-icon>
+                                                            {line.discountLabel}:
+                                                        </dt>
+                                                        <dd>-{line.formattedDiscount}</dd>
+                                                    </div>
+                                                </template>
+
+                                                <div class="wm-breakdown-item wm-total">
+                                                    <dt>Line Total:</dt>
+                                                    <dd>{line.formattedTotal}</dd>
+                                                </div>
+                                            </dl>
+                                        </div>
+
+                                        <!-- Service Schedule -->
+                                        <template if:true={line.hasSchedule}>
+                                            <div class="wm-schedule-info">
+                                                <h4>
+                                                    <lightning-icon icon-name="utility:event" size="xx-small"></lightning-icon>
+                                                    Service Schedule
+                                                </h4>
+                                                <p>{line.scheduleDescription}</p>
+                                            </div>
+                                        </template>
+
+                                        <!-- Location -->
+                                        <template if:true={line.hasLocation}>
+                                            <div class="wm-location-info">
+                                                <h4>
+                                                    <lightning-icon icon-name="utility:location" size="xx-small"></lightning-icon>
+                                                    Service Location
+                                                </h4>
+                                                <p>{line.locationAddress}</p>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- ========== Pricing Summary ========== -->
+            <div class="wm-pricing-summary-section">
+                <div class="wm-summary-card">
+
+                    <!-- Summary Header -->
+                    <div class="wm-summary-card-header">
+                        <h3>
+                            <lightning-icon icon-name="utility:money" size="x-small"></lightning-icon>
+                            Pricing Summary
+                        </h3>
+                        <button class="wm-expand-btn-sm" onclick={handleToggleSummaryDetails}>
+                            <lightning-icon icon-name={summaryDetailsIcon} size="xx-small"></lightning-icon>
+                            <span>{summaryDetailsLabel}</span>
+                        </button>
+                    </div>
+
+                    <!-- Summary Content -->
+                    <div class="wm-summary-content">
+
+                        <!-- Subtotal -->
+                        <div class="wm-summary-row">
+                            <span class="wm-summary-label">Subtotal:</span>
+                            <span class="wm-summary-value">{formattedSubtotal}</span>
+                        </div>
+
+                        <!-- Discounts (if applicable) -->
+                        <template if:true={hasDiscounts}>
+                            <template if:true={showSummaryDetails}>
+                                <template for:each={discounts} for:item="discount">
+                                    <div key={discount.id} class="wm-summary-row wm-discount-row">
+                                        <span class="wm-summary-label">
+                                            <lightning-icon icon-name="utility:percent" size="xx-small"></lightning-icon>
+                                            {discount.name}:
+                                        </span>
+                                        <span class="wm-summary-value wm-discount-value">-{discount.formattedAmount}</span>
+                                    </div>
+                                </template>
+                            </template>
+
+                            <template if:false={showSummaryDetails}>
+                                <div class="wm-summary-row wm-discount-row">
+                                    <span class="wm-summary-label">Total Discounts:</span>
+                                    <span class="wm-summary-value wm-discount-value">-{formattedTotalDiscounts}</span>
+                                </div>
+                            </template>
+                        </template>
+
+                        <!-- Subtotal After Discounts -->
+                        <template if:true={hasDiscounts}>
+                            <div class="wm-summary-row wm-subtotal-row">
+                                <span class="wm-summary-label">Subtotal After Discounts:</span>
+                                <span class="wm-summary-value">{formattedSubtotalAfterDiscounts}</span>
+                            </div>
+                        </template>
+
+                        <!-- Tax -->
+                        <template if:true={hasTax}>
+                            <div class="wm-summary-row">
+                                <span class="wm-summary-label">
+                                    Tax ({taxRate}%):
+                                </span>
+                                <span class="wm-summary-value">{formattedTax}</span>
+                            </div>
+                        </template>
+
+                        <!-- Total -->
+                        <div class="wm-summary-row wm-total-row">
+                            <span class="wm-summary-label">Total Quote Value:</span>
+                            <span class="wm-summary-value wm-total-value">{formattedTotal}</span>
+                        </div>
+
+                        <!-- Recurring Note -->
+                        <template if:true={hasRecurringServices}>
+                            <div class="wm-recurring-note">
+                                <lightning-icon icon-name="utility:info" size="xx-small"></lightning-icon>
+                                <span>This quote includes recurring services. Total reflects all scheduled services.</span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== Price Transparency Section ========== -->
+            <template if:true={showTransparency}>
+                <div class="wm-transparency-section">
+                    <div class="wm-transparency-header">
+                        <h3>
+                            <lightning-icon icon-name="utility:preview" size="x-small"></lightning-icon>
+                            How We Calculated This Price
+                        </h3>
+                        <button class="wm-collapse-btn" onclick={handleToggleTransparency}>
+                            <lightning-icon icon-name="utility:chevronup" size="xx-small"></lightning-icon>
+                            Hide
+                        </button>
+                    </div>
+
+                    <div class="wm-transparency-content">
+                        <div class="wm-transparency-steps">
+                            <div class="wm-step">
+                                <div class="wm-step-number">1</div>
+                                <div class="wm-step-content">
+                                    <h4>Base Pricing</h4>
+                                    <p>Standard rates for {serviceType} services in your service area.</p>
+                                </div>
+                            </div>
+
+                            <template if:true={hasEntitlementPricing}>
+                                <div class="wm-step">
+                                    <div class="wm-step-number">2</div>
+                                    <div class="wm-step-content">
+                                        <h4>Contract Pricing Applied</h4>
+                                        <p>Your account has special contract pricing for these services.</p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template if:true={hasVolumeDiscount}>
+                                <div class="wm-step">
+                                    <div class="wm-step-number">{volumeDiscountStepNumber}</div>
+                                    <div class="wm-step-content">
+                                        <h4>Volume Discount</h4>
+                                        <p>Discount applied for {volumeDiscountReason}.</p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div class="wm-step">
+                                <div class="wm-step-number">{finalStepNumber}</div>
+                                <div class="wm-step-content">
+                                    <h4>Tax Calculation</h4>
+                                    <p>Sales tax calculated at {taxRate}% based on service location.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <template if:false={showTransparency}>
+                <div class="wm-transparency-toggle">
+                    <button class="wm-transparency-btn" onclick={handleToggleTransparency}>
+                        <lightning-icon icon-name="utility:preview" size="xx-small"></lightning-icon>
+                        How was this price calculated?
+                    </button>
+                </div>
+            </template>
+
+            <!-- ========== Actions ========== -->
+            <div class="wm-pricing-actions">
+                <lightning-button
+                    variant="neutral"
+                    label="Modify Quote"
+                    icon-name="utility:edit"
+                    onclick={handleModifyQuote}
+                    class="wm-btn-secondary">
+                </lightning-button>
+
+                <lightning-button
+                    variant="brand"
+                    label="Accept & Continue"
+                    icon-name="utility:forward"
+                    onclick={handleAcceptPricing}
+                    class="wm-btn-primary">
+                </lightning-button>
+            </div>
+
+        </template>
+
+        <!-- ========== Error State ========== -->
+        <template if:true={hasError}>
+            <div class="wm-error-state">
+                <lightning-icon icon-name="utility:error" size="medium"></lightning-icon>
+                <div class="wm-error-content">
+                    <h3>Unable to Calculate Pricing</h3>
+                    <p>{errorMessage}</p>
+                    <lightning-button
+                        variant="brand"
+                        label="Retry"
+                        onclick={handleRetry}
+                        class="wm-btn-primary">
+                    </lightning-button>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>
