@@ -1,0 +1,509 @@
+/**
+ * WM Schedule Selector Styles
+ * One-time vs recurring service scheduling with visual preview
+ */
+
+:host {
+    --wm-green-primary: #1c8200;
+    --wm-green-dark: #135B00;
+    --wm-teal-dark: #024731;
+    --wm-sand-light: #F8F8F2;
+
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+
+    display: block;
+}
+
+/* ========== Container ========== */
+.wm-schedule-selector {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+/* ========== Section Headers ========== */
+.wm-section-header {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-md) 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ========== Service Type Section ========== */
+.wm-service-type-section {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+}
+
+.wm-service-type-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.wm-type-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--spacing-md);
+    align-items: center;
+    padding: var(--spacing-md);
+    background-color: #FFFFFF;
+    border: 2px solid #E5E5E5;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wm-type-card:hover {
+    border-color: var(--wm-green-primary);
+    box-shadow: 0 2px 4px rgba(28, 130, 0, 0.1);
+}
+
+.wm-type-card-selected {
+    border-color: var(--wm-green-primary);
+    background: linear-gradient(135deg, rgba(28, 130, 0, 0.05), rgba(28, 130, 0, 0.02));
+}
+
+.wm-type-icon {
+    color: var(--wm-green-primary);
+}
+
+.wm-type-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.wm-type-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+}
+
+.wm-type-description {
+    font-size: 0.8125rem;
+    color: #666;
+}
+
+.wm-type-selected {
+    color: var(--wm-green-primary);
+}
+
+/* ========== Schedule Details ========== */
+.wm-schedule-details {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+/* ========== One-Time Info ========== */
+.wm-onetime-info {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: #E8F4FD;
+    border-left: 4px solid #0176D3;
+    border-radius: 0.25rem;
+}
+
+.wm-info-icon {
+    color: #0176D3;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.wm-info-content {
+    flex: 1;
+}
+
+.wm-info-content p {
+    font-size: 0.9375rem;
+    color: #014486;
+    margin: 0 0 0.5rem 0;
+}
+
+.wm-info-content p:last-child {
+    margin-bottom: 0;
+}
+
+.wm-info-note {
+    font-size: 0.8125rem;
+    color: #014486;
+    opacity: 0.8;
+}
+
+/* ========== One-Time Summary ========== */
+.wm-onetime-summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: var(--wm-sand-light);
+    border-radius: 0.25rem;
+}
+
+.wm-summary-item {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.wm-summary-label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.wm-summary-value {
+    font-size: 0.9375rem;
+    color: var(--wm-teal-dark);
+}
+
+/* ========== Frequency Section ========== */
+.wm-frequency-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.wm-frequency-radio {
+    width: 100%;
+}
+
+/* ========== Day Selection ========== */
+.wm-day-selector {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.wm-day-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.wm-day-button {
+    flex: 0 0 auto;
+    min-width: 3.5rem;
+    padding: 0.75rem 1rem;
+    background-color: #FFFFFF;
+    border: 2px solid #E5E5E5;
+    border-radius: 0.25rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wm-day-button:hover {
+    border-color: var(--wm-green-primary);
+    color: var(--wm-green-primary);
+}
+
+.wm-day-button-selected {
+    background-color: var(--wm-green-primary);
+    border-color: var(--wm-green-primary);
+    color: #FFFFFF;
+}
+
+.wm-day-dropdown {
+    max-width: 300px;
+}
+
+/* ========== Date Inputs ========== */
+.wm-start-date-section,
+.wm-duration-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.wm-date-input {
+    max-width: 300px;
+}
+
+.wm-end-date-input,
+.wm-occurrence-input {
+    margin-top: var(--spacing-sm);
+    padding-left: var(--spacing-lg);
+}
+
+.wm-number-input {
+    max-width: 200px;
+}
+
+/* ========== Duration Radio ========== */
+.wm-duration-radio {
+    width: 100%;
+}
+
+/* ========== Schedule Preview ========== */
+.wm-schedule-preview {
+    background: linear-gradient(135deg, rgba(28, 130, 0, 0.05), rgba(28, 130, 0, 0.02));
+    border: 2px solid var(--wm-green-primary);
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.wm-preview-summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.wm-preview-description {
+    font-size: 0.9375rem;
+    color: var(--wm-teal-dark);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ========== Upcoming Dates ========== */
+.wm-upcoming-dates {
+    background-color: #FFFFFF;
+    border-radius: 0.25rem;
+    padding: var(--spacing-md);
+}
+
+.wm-upcoming-header {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.wm-dates-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.wm-date-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.wm-date-item lightning-icon {
+    color: var(--wm-green-primary);
+}
+
+.wm-more-dates {
+    font-size: 0.8125rem;
+    color: #666;
+    margin: var(--spacing-sm) 0 0 0;
+    font-style: italic;
+}
+
+/* ========== Total Services ========== */
+.wm-total-services {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: #FFFFFF;
+    border-radius: 0.25rem;
+}
+
+.wm-total-services lightning-icon {
+    color: var(--wm-green-primary);
+}
+
+.wm-total-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.wm-total-label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.wm-total-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-green-primary);
+}
+
+/* ========== Schedule Summary Card ========== */
+.wm-schedule-summary {
+    background-color: #FFFFFF;
+    border: 2px solid var(--wm-green-primary);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.wm-summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: linear-gradient(135deg, rgba(28, 130, 0, 0.1), rgba(28, 130, 0, 0.05));
+    border-bottom: 1px solid rgba(28, 130, 0, 0.2);
+}
+
+.wm-summary-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-success-icon {
+    color: var(--wm-green-primary);
+}
+
+.wm-summary-content {
+    padding: var(--spacing-lg);
+}
+
+.wm-summary-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--spacing-sm) var(--spacing-md);
+}
+
+.wm-summary-row {
+    display: contents;
+}
+
+.wm-summary-row .wm-summary-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.wm-summary-row .wm-summary-value {
+    font-size: 0.875rem;
+    color: var(--wm-teal-dark);
+}
+
+/* ========== Error State ========== */
+.wm-error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xl);
+    background-color: #FDECEA;
+    border: 2px solid #C23934;
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+.wm-error-content h4 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #C23934;
+    margin: 0 0 0.5rem 0;
+}
+
+.wm-error-content p {
+    font-size: 0.9375rem;
+    color: #721C24;
+    margin: 0;
+    max-width: 500px;
+}
+
+/* ========== Responsive Design ========== */
+
+/* Mobile (375px - 767px) */
+@media (max-width: 767px) {
+    .wm-service-type-toggle {
+        grid-template-columns: 1fr;
+    }
+
+    .wm-type-card {
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+    }
+
+    .wm-type-selected {
+        grid-column: 1 / -1;
+        justify-self: flex-end;
+    }
+
+    .wm-day-buttons {
+        justify-content: center;
+    }
+
+    .wm-day-button {
+        flex: 1 1 auto;
+        min-width: 2.75rem;
+        padding: 0.625rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .wm-date-input,
+    .wm-day-dropdown,
+    .wm-number-input {
+        max-width: 100%;
+    }
+
+    .wm-summary-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+
+    .wm-summary-row .wm-summary-label {
+        font-weight: 700;
+        margin-top: var(--spacing-sm);
+    }
+
+    .wm-summary-row:first-child .wm-summary-label {
+        margin-top: 0;
+    }
+
+    .wm-end-date-input,
+    .wm-occurrence-input {
+        padding-left: 0;
+    }
+}
+
+/* Tablet (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .wm-service-type-toggle {
+        gap: var(--spacing-md);
+    }
+
+    .wm-day-buttons {
+        gap: var(--spacing-md);
+    }
+}
+
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
+    .wm-day-button {
+        min-width: 4rem;
+        padding: 0.875rem 1.25rem;
+    }
+}

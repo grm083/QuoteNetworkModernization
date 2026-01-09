@@ -1,0 +1,274 @@
+<template>
+    <!-- WM Smart Favorites List with AI-powered recommendations -->
+    <div class="wm-favorites-container">
+
+        <!-- Recommendation Banner (if high-confidence match found) -->
+        <template if:true={hasRecommendation}>
+            <div class="wm-recommendation-banner">
+                <div class="wm-banner-header">
+                    <lightning-icon icon-name="utility:sparkles" size="small" class="wm-sparkles-icon"></lightning-icon>
+                    <h3>Recommended for You</h3>
+                </div>
+                <p class="wm-banner-text">Based on customer history and request description</p>
+            </div>
+        </template>
+
+        <!-- Tabbed Interface: Favorites | Recent | Search -->
+        <lightning-tabset variant="scoped" active-tab-value={activeTab} onactive={handleTabChange}>
+
+            <!-- Favorites Tab -->
+            <lightning-tab label="Favorites" value="favorites" icon-name="utility:favorite">
+                <div class="wm-tab-content">
+
+                    <!-- Loading State -->
+                    <template if:true={isLoading}>
+                        <div class="wm-loading-state">
+                            <lightning-spinner alternative-text="Loading favorites..." size="medium"></lightning-spinner>
+                            <p>Loading your favorites...</p>
+                        </div>
+                    </template>
+
+                    <!-- Favorites Grid -->
+                    <template if:true={hasFavorites}>
+                        <div class="wm-favorites-grid">
+                            <template for:each={favorites} for:item="favorite">
+                                <div key={favorite.favoriteId} class={favorite.cardClass}>
+
+                                    <!-- Confidence Badge (for high-scoring recommendations) -->
+                                    <template if:true={favorite.isHighConfidence}>
+                                        <div class="wm-confidence-badge">
+                                            <lightning-badge label={favorite.confidenceText} variant="success"></lightning-badge>
+                                        </div>
+                                    </template>
+
+                                    <!-- Card Content -->
+                                    <div class="wm-favorite-content">
+                                        <h3 class="wm-favorite-title">{favorite.containerType}</h3>
+
+                                        <div class="wm-favorite-details">
+                                            <div class="wm-detail-row">
+                                                <lightning-icon icon-name="utility:product" size="x-small"></lightning-icon>
+                                                <span>Size: {favorite.equipmentSize}</span>
+                                            </div>
+
+                                            <div class="wm-detail-row">
+                                                <lightning-icon icon-name="utility:recycle_bin" size="x-small"></lightning-icon>
+                                                <span>Material: {favorite.materialType}</span>
+                                            </div>
+
+                                            <div class="wm-detail-row">
+                                                <lightning-icon icon-name="utility:number_input" size="x-small"></lightning-icon>
+                                                <span>Qty: {favorite.quantity}</span>
+                                            </div>
+
+                                            <template if:true={favorite.ownership}>
+                                                <div class="wm-detail-row">
+                                                    <lightning-icon icon-name="utility:user" size="x-small"></lightning-icon>
+                                                    <span>{favorite.ownership}</span>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- Recommendation Reason -->
+                                        <template if:true={favorite.reasonText}>
+                                            <div class="wm-recommendation-reason">
+                                                <lightning-icon icon-name="utility:info" size="xx-small" class="wm-reason-icon"></lightning-icon>
+                                                <span class="wm-reason-text">{favorite.reasonText}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Card Actions -->
+                                    <div class="wm-favorite-actions">
+                                        <lightning-button
+                                            label="Select"
+                                            variant="brand"
+                                            data-favorite-id={favorite.favoriteId}
+                                            onclick={handleSelectFavorite}
+                                            class="wm-btn-select">
+                                        </lightning-button>
+                                        <lightning-button-icon
+                                            icon-name="utility:preview"
+                                            alternative-text="Preview"
+                                            title="Preview Configuration"
+                                            data-favorite-id={favorite.favoriteId}
+                                            onclick={handlePreviewFavorite}
+                                            class="wm-btn-preview">
+                                        </lightning-button-icon>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Empty State -->
+                    <template if:true={showEmptyState}>
+                        <div class="wm-empty-state">
+                            <lightning-icon icon-name="custom:custom78" size="large"></lightning-icon>
+                            <h3>No Favorites Available</h3>
+                            <p>You don't have any saved favorites yet. Try searching the catalog or creating a custom configuration.</p>
+                            <lightning-button
+                                label="Search Catalog"
+                                variant="brand"
+                                onclick={handleSwitchToSearch}
+                                class="wm-btn-primary">
+                            </lightning-button>
+                        </div>
+                    </template>
+
+                </div>
+            </lightning-tab>
+
+            <!-- Recent for This Customer Tab -->
+            <lightning-tab label={recentTabLabel} value="recent" icon-name="utility:clock">
+                <div class="wm-tab-content">
+
+                    <template if:true={hasRecentOrders}>
+                        <div class="wm-recent-list">
+                            <div class="wm-recent-header">
+                                <lightning-icon icon-name="utility:clock" size="small"></lightning-icon>
+                                <h3>Recent Orders for {accountName}</h3>
+                            </div>
+
+                            <template for:each={recentOrders} for:item="order">
+                                <div key={order.id} class="wm-recent-item">
+                                    <div class="wm-recent-content">
+                                        <h4>{order.productName}</h4>
+                                        <p class="wm-recent-details">{order.size} | {order.material} | {order.formattedDate}</p>
+                                        <span class="wm-recent-frequency">Used {order.count} times</span>
+                                    </div>
+                                    <lightning-button
+                                        label="Use This"
+                                        variant="neutral"
+                                        data-order-id={order.id}
+                                        onclick={handleSelectRecent}>
+                                    </lightning-button>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <template if:false={hasRecentOrders}>
+                        <div class="wm-empty-state">
+                            <lightning-icon icon-name="utility:clock" size="large"></lightning-icon>
+                            <h3>No Recent Orders</h3>
+                            <p>This customer doesn't have recent orders in our system.</p>
+                        </div>
+                    </template>
+
+                </div>
+            </lightning-tab>
+
+            <!-- Search Catalog Tab -->
+            <lightning-tab label="Search All" value="search" icon-name="utility:search">
+                <div class="wm-tab-content">
+
+                    <!-- Search Bar -->
+                    <div class="wm-search-bar">
+                        <lightning-input
+                            type="search"
+                            label="Search Products"
+                            placeholder="Search by name, size, or material..."
+                            value={searchQuery}
+                            onchange={handleSearchChange}
+                            class="wm-search-input">
+                        </lightning-input>
+                        <lightning-button
+                            label="Search"
+                            variant="brand"
+                            icon-name="utility:search"
+                            onclick={handleSearch}
+                            disabled={!searchQuery}
+                            class="wm-btn-search">
+                        </lightning-button>
+                    </div>
+
+                    <!-- Search Results -->
+                    <template if:true={hasSearchResults}>
+                        <div class="wm-search-results">
+                            <p class="wm-results-count">Found {searchResultsCount} products</p>
+
+                            <div class="wm-products-grid">
+                                <template for:each={searchResults} for:item="product">
+                                    <div key={product.id} class="wm-product-card">
+                                        <h4>{product.name}</h4>
+                                        <p class="wm-product-details">{product.family}</p>
+                                        <template if:true={product.containerSize}>
+                                            <p class="wm-product-size">Size: {product.containerSize}</p>
+                                        </template>
+                                        <lightning-button
+                                            label="Configure"
+                                            variant="neutral"
+                                            data-product-id={product.id}
+                                            onclick={handleSelectProduct}>
+                                        </lightning-button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Search Empty State -->
+                    <template if:true={showSearchEmpty}>
+                        <div class="wm-empty-state">
+                            <lightning-icon icon-name="utility:search" size="large"></lightning-icon>
+                            <h3>Search Our Catalog</h3>
+                            <p>Enter a product name, size, or material to find services</p>
+                        </div>
+                    </template>
+
+                    <!-- No Results -->
+                    <template if:true={showNoResults}>
+                        <div class="wm-empty-state">
+                            <lightning-icon icon-name="utility:warning" size="large" variant="warning"></lightning-icon>
+                            <h3>No Products Found</h3>
+                            <p>Try a different search term or browse favorites</p>
+                        </div>
+                    </template>
+
+                </div>
+            </lightning-tab>
+
+        </lightning-tabset>
+
+        <!-- Custom Configuration Option -->
+        <div class="wm-custom-config-section">
+            <p class="wm-custom-text">Need something specific?</p>
+            <lightning-button
+                label="Create Custom Configuration"
+                icon-name="utility:settings"
+                onclick={handleCustomConfig}
+                variant="neutral"
+                class="wm-btn-custom">
+            </lightning-button>
+        </div>
+
+    </div>
+
+    <!-- Preview Modal (Future Enhancement) -->
+    <template if:true={showPreviewModal}>
+        <section role="dialog" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <h2 class="slds-text-heading_medium">Preview Configuration</h2>
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        alternative-text="Close"
+                        onclick={handleClosePreview}
+                        variant="bare-inverse"
+                        class="slds-modal__close">
+                    </lightning-button-icon>
+                </header>
+                <div class="slds-modal__content">
+                    <p>Preview modal content will be shown here</p>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" onclick={handleClosePreview}></lightning-button>
+                    <lightning-button label="Select This" variant="brand" onclick={handleConfirmPreview}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+</template>

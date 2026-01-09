@@ -1,0 +1,614 @@
+/**
+ * WM Procurement Workbench Styles
+ * Bulk editing interface for vendor assignment, costs, and MAS configuration
+ */
+
+:host {
+    --wm-green-primary: #1c8200;
+    --wm-green-dark: #135B00;
+    --wm-teal-dark: #024731;
+    --wm-sand-light: #F8F8F2;
+
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+
+    display: block;
+    background-color: #F4F6F9;
+    min-height: 100vh;
+}
+
+/* ========== Workbench Container ========== */
+.wm-procurement-workbench {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* ========== Header ========== */
+.wm-workbench-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background: linear-gradient(135deg, var(--wm-teal-dark), #025940);
+    color: #FFFFFF;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.wm-header-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.wm-header-title h1 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.wm-quote-number {
+    font-size: 1rem;
+    font-weight: 400;
+    opacity: 0.9;
+}
+
+.wm-header-status {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.wm-status-badge {
+    --slds-c-badge-color-background: #0176D3;
+}
+
+.wm-assigned,
+.wm-due-time {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+/* ========== Main Content Area ========== */
+.wm-workbench-content {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    flex: 1;
+}
+
+/* ========== Main Column ========== */
+.wm-main-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+/* ========== Quote Overview ========== */
+.wm-quote-overview {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+}
+
+.wm-quote-overview h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+.wm-overview-list {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm) var(--spacing-lg);
+}
+
+.wm-overview-item {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.wm-overview-item dt {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #666;
+    min-width: 120px;
+}
+
+.wm-overview-item dd {
+    font-size: 0.875rem;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-progress-item {
+    grid-column: 1 / -1;
+    flex-direction: column;
+}
+
+.wm-progress-text {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.wm-complete {
+    color: var(--wm-green-primary);
+    font-weight: 600;
+}
+
+.wm-incomplete {
+    color: #F39C12;
+    font-weight: 600;
+}
+
+/* ========== Grid Section ========== */
+.wm-grid-section {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.wm-grid-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background-color: var(--wm-sand-light);
+    border-bottom: 1px solid #E5E5E5;
+}
+
+.wm-grid-header h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-grid-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.wm-select-all {
+    margin: 0;
+}
+
+.wm-showing {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.wm-filter-dropdown {
+    min-width: 150px;
+}
+
+/* ========== Data Grid ========== */
+.wm-grid-container {
+    overflow-x: auto;
+    max-height: 500px;
+}
+
+.wm-data-grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.wm-data-grid thead {
+    background-color: var(--wm-sand-light);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.wm-data-grid th {
+    padding: var(--spacing-sm);
+    text-align: left;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    border-bottom: 2px solid #E5E5E5;
+}
+
+.wm-data-grid td {
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid #E5E5E5;
+}
+
+/* Grid Columns */
+.wm-col-check { width: 40px; }
+.wm-col-number { width: 40px; }
+.wm-col-service { min-width: 200px; }
+.wm-col-frequency { width: 120px; }
+.wm-col-vendor { min-width: 180px; }
+.wm-col-score { width: 60px; text-align: center; }
+.wm-col-cost { width: 120px; }
+.wm-col-mas { width: 60px; text-align: center; }
+.wm-col-status { width: 40px; text-align: center; }
+
+/* Grid Rows */
+.wm-grid-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.wm-grid-row:hover {
+    background-color: rgba(28, 130, 0, 0.05);
+}
+
+.wm-row-error {
+    background-color: rgba(194, 57, 52, 0.05);
+}
+
+.wm-row-error:hover {
+    background-color: rgba(194, 57, 52, 0.1);
+}
+
+/* Service Column */
+.wm-service-name {
+    font-weight: 600;
+    color: var(--wm-teal-dark);
+}
+
+.wm-service-detail {
+    font-size: 0.8125rem;
+    color: #666;
+    margin-top: 0.125rem;
+}
+
+/* Vendor Column */
+.wm-vendor-name {
+    color: var(--wm-teal-dark);
+}
+
+.wm-select-vendor-btn {
+    padding: 0.25rem 0.75rem;
+    background-color: #FFFFFF;
+    border: 1px solid var(--wm-green-primary);
+    border-radius: 0.25rem;
+    color: var(--wm-green-primary);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.wm-select-vendor-btn:hover {
+    background-color: var(--wm-green-primary);
+    color: #FFFFFF;
+}
+
+/* Score Column */
+.wm-score {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 700;
+}
+
+.wm-score-high {
+    background-color: rgba(28, 130, 0, 0.15);
+    color: var(--wm-green-dark);
+}
+
+.wm-score-medium {
+    background-color: rgba(243, 156, 18, 0.15);
+    color: #B7791F;
+}
+
+.wm-score-low {
+    background-color: rgba(194, 57, 52, 0.15);
+    color: #C23934;
+}
+
+/* Cost Column */
+.wm-cost-input {
+    width: 100px;
+}
+
+/* MAS Column */
+.wm-config-mas-btn {
+    background: none;
+    border: none;
+    font-size: 1.125rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: transform 0.2s ease;
+}
+
+.wm-config-mas-btn:hover {
+    transform: scale(1.2);
+}
+
+/* ========== Grid Footer ========== */
+.wm-grid-footer {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid #E5E5E5;
+}
+
+.wm-add-line-btn {
+    color: var(--wm-green-primary);
+}
+
+/* ========== Line Details Panel ========== */
+.wm-line-details {
+    background-color: #FFFFFF;
+    border: 2px solid var(--wm-green-primary);
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+}
+
+.wm-details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--wm-green-primary);
+}
+
+.wm-details-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0;
+}
+
+.wm-close-details {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s ease;
+}
+
+.wm-close-details:hover {
+    color: var(--wm-teal-dark);
+}
+
+/* ========== Details Sections ========== */
+.wm-details-section {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background-color: var(--wm-sand-light);
+    border-radius: 0.25rem;
+}
+
+.wm-details-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+/* ========== Cost Fields ========== */
+.wm-cost-fields {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+}
+
+.wm-cost-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background-color: #E8F4FD;
+    border-left: 4px solid #0176D3;
+    border-radius: 0.25rem;
+    font-size: 0.8125rem;
+    color: #014486;
+}
+
+/* ========== Details Actions ========== */
+.wm-details-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: flex-end;
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid #E5E5E5;
+}
+
+/* ========== Validation Summary ========== */
+.wm-validation-summary {
+    background-color: #FFF3CD;
+    border: 2px solid #F39C12;
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+}
+
+.wm-validation-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.wm-validation-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #856404;
+    margin: 0;
+}
+
+.wm-validation-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.wm-validation-item {
+    font-size: 0.875rem;
+    color: #856404;
+    padding: var(--spacing-sm);
+    background-color: #FFFFFF;
+    border-radius: 0.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wm-fix-link {
+    background: none;
+    border: none;
+    color: var(--wm-green-primary);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/* ========== Actions Column ========== */
+.wm-actions-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.wm-bulk-actions {
+    background-color: #FFFFFF;
+    border: 1px solid #E5E5E5;
+    border-radius: 0.5rem;
+    padding: var(--spacing-lg);
+    position: sticky;
+    top: var(--spacing-lg);
+}
+
+.wm-bulk-actions h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--wm-teal-dark);
+    margin: 0 0 var(--spacing-md) 0;
+}
+
+.wm-selection-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: var(--spacing-sm);
+    background-color: var(--wm-sand-light);
+    border-radius: 0.25rem;
+    margin-bottom: var(--spacing-md);
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.wm-bulk-btn {
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+    justify-content: flex-start;
+}
+
+.wm-actions-divider {
+    height: 1px;
+    background-color: #E5E5E5;
+    margin: var(--spacing-md) 0;
+}
+
+.wm-save-btn,
+.wm-complete-btn {
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+}
+
+.wm-complete-btn {
+    margin-top: var(--spacing-sm);
+}
+
+/* ========== Footer ========== */
+.wm-workbench-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-xl);
+    background-color: #FFFFFF;
+    border-top: 1px solid #E5E5E5;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.wm-footer-info {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+/* ========== WM Button Overrides ========== */
+.wm-btn-primary {
+    --slds-c-button-brand-color-background: var(--wm-green-primary);
+    --slds-c-button-brand-color-background-hover: var(--wm-green-dark);
+}
+
+.wm-btn-secondary {
+    --slds-c-button-neutral-color-border: var(--wm-green-primary);
+    --slds-c-button-neutral-text-color: var(--wm-green-primary);
+}
+
+/* ========== Responsive Design ========== */
+
+/* Tablet (768px - 1023px) */
+@media (max-width: 1023px) {
+    .wm-workbench-content {
+        grid-template-columns: 1fr;
+    }
+
+    .wm-actions-column {
+        order: -1;
+    }
+
+    .wm-bulk-actions {
+        position: static;
+    }
+
+    .wm-overview-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Mobile (375px - 767px) */
+@media (max-width: 767px) {
+    .wm-workbench-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .wm-header-status {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .wm-grid-container {
+        overflow-x: scroll;
+    }
+
+    .wm-cost-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .wm-details-actions {
+        flex-direction: column;
+    }
+
+    .wm-workbench-footer {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+}

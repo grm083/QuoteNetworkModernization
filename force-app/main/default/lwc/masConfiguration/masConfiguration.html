@@ -1,0 +1,255 @@
+<template>
+    <div class="wm-mas-configuration">
+        <!-- MAS Header -->
+        <div class="wm-mas-header">
+            <lightning-icon icon-name="standard:settings" size="small"></lightning-icon>
+            <h3>MAS Configuration</h3>
+            <template if:true={canAutoPopulate}>
+                <lightning-badge label="Auto-Populate Available" class="wm-auto-badge"></lightning-badge>
+            </template>
+        </div>
+
+        <!-- Auto-Populate Section -->
+        <template if:true={canAutoPopulate}>
+            <div class="wm-auto-populate-section">
+                <div class="wm-auto-info">
+                    <lightning-icon icon-name="utility:info" size="x-small"></lightning-icon>
+                    <span>MAS fields can be auto-populated based on vendor and location</span>
+                </div>
+                <lightning-button
+                    label="Auto-Populate MAS Fields"
+                    variant="brand"
+                    icon-name="utility:refresh"
+                    onclick={handleAutoPopulate}
+                    disabled={isLoading}
+                    class="wm-auto-populate-btn">
+                </lightning-button>
+            </div>
+        </template>
+
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+            <div class="wm-loading">
+                <lightning-spinner alternative-text="Loading MAS configuration..." size="small"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Critical MAS Fields (Always Visible) -->
+        <template if:false={isLoading}>
+            <div class="wm-critical-fields">
+                <h4 class="wm-section-title">
+                    <lightning-icon icon-name="utility:warning" size="x-small" class="wm-required-icon"></lightning-icon>
+                    Critical MAS Fields (Required for WM Vendors)
+                </h4>
+
+                <div class="wm-field-grid">
+                    <!-- MAS Library -->
+                    <div class="wm-field-wrapper">
+                        <lightning-input
+                            label="MAS Library"
+                            value={masFields.MASLibrary__c}
+                            data-field="MASLibrary__c"
+                            onchange={handleFieldChange}
+                            required={isWMVendor}
+                            class={getCriticalFieldClass}>
+                        </lightning-input>
+                        <template if:true={fieldErrors.MASLibrary__c}>
+                            <div class="wm-field-error">{fieldErrors.MASLibrary__c}</div>
+                        </template>
+                    </div>
+
+                    <!-- MAS Company -->
+                    <div class="wm-field-wrapper">
+                        <lightning-input
+                            label="MAS Company"
+                            value={masFields.MASCompany__c}
+                            data-field="MASCompany__c"
+                            onchange={handleFieldChange}
+                            required={isWMVendor}
+                            class={getCriticalFieldClass}>
+                        </lightning-input>
+                        <template if:true={fieldErrors.MASCompany__c}>
+                            <div class="wm-field-error">{fieldErrors.MASCompany__c}</div>
+                        </template>
+                    </div>
+
+                    <!-- MAS Account -->
+                    <div class="wm-field-wrapper">
+                        <lightning-input
+                            label="MAS Account"
+                            type="number"
+                            value={masFields.MASAccount__c}
+                            data-field="MASAccount__c"
+                            onchange={handleFieldChange}
+                            required={isWMVendor}
+                            class={getCriticalFieldClass}>
+                        </lightning-input>
+                        <template if:true={fieldErrors.MASAccount__c}>
+                            <div class="wm-field-error">{fieldErrors.MASAccount__c}</div>
+                        </template>
+                    </div>
+
+                    <!-- MAS Customer ID -->
+                    <div class="wm-field-wrapper">
+                        <lightning-input
+                            label="MAS Customer ID"
+                            value={masFields.MASCustomerID__c}
+                            data-field="MASCustomerID__c"
+                            onchange={handleFieldChange}
+                            required={isWMVendor}
+                            class={getCriticalFieldClass}>
+                        </lightning-input>
+                        <template if:true={fieldErrors.MASCustomerID__c}>
+                            <div class="wm-field-error">{fieldErrors.MASCustomerID__c}</div>
+                        </template>
+                    </div>
+
+                    <!-- MAS Service Line -->
+                    <div class="wm-field-wrapper">
+                        <lightning-input
+                            label="MAS Service Line"
+                            value={masFields.MASServiceLine__c}
+                            data-field="MASServiceLine__c"
+                            onchange={handleFieldChange}
+                            required={isWMVendor}
+                            class={getCriticalFieldClass}>
+                        </lightning-input>
+                        <template if:true={fieldErrors.MASServiceLine__c}>
+                            <div class="wm-field-error">{fieldErrors.MASServiceLine__c}</div>
+                        </template>
+                    </div>
+
+                    <!-- VCR Code -->
+                    <div class="wm-field-wrapper">
+                        <lightning-input
+                            label="VCR Code"
+                            value={masFields.VCRCode__c}
+                            data-field="VCRCode__c"
+                            onchange={handleFieldChange}
+                            required={isWMVendor}
+                            class={getCriticalFieldClass}>
+                        </lightning-input>
+                        <template if:true={fieldErrors.VCRCode__c}>
+                            <div class="wm-field-error">{fieldErrors.VCRCode__c}</div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expandable Additional Fields -->
+            <div class="wm-additional-fields">
+                <div class="wm-expand-header" onclick={toggleExpandedFields}>
+                    <h4 class="wm-section-title">
+                        Additional MAS Fields ({additionalFieldCount})
+                    </h4>
+                    <lightning-icon
+                        icon-name={expandIconName}
+                        size="x-small"
+                        class="wm-expand-icon">
+                    </lightning-icon>
+                </div>
+
+                <template if:true={showAdditionalFields}>
+                    <div class="wm-field-grid">
+                        <!-- Additional MAS Fields -->
+                        <template for:each={additionalMASFields} for:item="field">
+                            <div key={field.name} class="wm-field-wrapper">
+                                <lightning-input
+                                    label={field.label}
+                                    value={field.value}
+                                    type={field.type}
+                                    data-field={field.name}
+                                    onchange={handleFieldChange}
+                                    required={field.required}>
+                                </lightning-input>
+                                <template if:true={field.helpText}>
+                                    <div class="wm-field-help">{field.helpText}</div>
+                                </template>
+                                <template if:true={field.error}>
+                                    <div class="wm-field-error">{field.error}</div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+
+            <!-- MAS Validation Summary -->
+            <template if:true={hasValidationErrors}>
+                <div class="wm-validation-summary">
+                    <div class="wm-validation-header">
+                        <lightning-icon icon-name="utility:warning" size="x-small" variant="warning"></lightning-icon>
+                        <span class="wm-validation-title">MAS Configuration Issues</span>
+                    </div>
+                    <ul class="wm-validation-list">
+                        <template for:each={validationErrors} for:item="error">
+                            <li key={error.field} class="wm-validation-item">
+                                <strong>{error.fieldLabel}:</strong> {error.message}
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+            </template>
+
+            <!-- MAS Actions -->
+            <div class="wm-mas-actions">
+                <lightning-button
+                    label="Validate MAS Fields"
+                    variant="neutral"
+                    icon-name="utility:check"
+                    onclick={handleValidateMAS}
+                    disabled={isLoading}
+                    class="wm-validate-btn">
+                </lightning-button>
+
+                <lightning-button
+                    label="Save MAS Configuration"
+                    variant="brand"
+                    icon-name="utility:save"
+                    onclick={handleSaveMAS}
+                    disabled={isLoading}
+                    class="wm-save-btn">
+                </lightning-button>
+
+                <template if:true={hasChanges}>
+                    <lightning-button
+                        label="Reset Changes"
+                        variant="neutral"
+                        icon-name="utility:undo"
+                        onclick={handleResetChanges}
+                        disabled={isLoading}
+                        class="wm-reset-btn">
+                    </lightning-button>
+                </template>
+            </div>
+
+            <!-- Help Section -->
+            <div class="wm-mas-help">
+                <lightning-accordion allow-multiple-sections-open>
+                    <lightning-accordion-section label="MAS Field Reference" name="help">
+                        <div class="wm-help-content">
+                            <p><strong>MAS Library:</strong> The MAS library code (e.g., "WM01", "WM02")</p>
+                            <p><strong>MAS Company:</strong> Company identifier in MAS system (e.g., "001")</p>
+                            <p><strong>MAS Account:</strong> Numeric account number in MAS</p>
+                            <p><strong>MAS Customer ID:</strong> Customer identifier for billing</p>
+                            <p><strong>MAS Service Line:</strong> Service line code in MAS</p>
+                            <p><strong>VCR Code:</strong> Vendor/Customer/Route code for WM vendors</p>
+                            <p class="wm-help-note">
+                                <lightning-icon icon-name="utility:info" size="xx-small"></lightning-icon>
+                                For WM vendors, all critical fields are required. Auto-populate will fill these based on vendor and location.
+                            </p>
+                        </div>
+                    </lightning-accordion-section>
+                </lightning-accordion>
+            </div>
+        </template>
+
+        <!-- Error Message -->
+        <template if:true={errorMessage}>
+            <div class="wm-error-message">
+                <lightning-icon icon-name="utility:error" size="small" variant="error"></lightning-icon>
+                <span>{errorMessage}</span>
+            </div>
+        </template>
+    </div>
+</template>

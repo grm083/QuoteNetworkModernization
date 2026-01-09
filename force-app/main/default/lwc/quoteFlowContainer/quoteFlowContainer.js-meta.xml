@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>WM Quote Flow Container</masterLabel>
+    <description>Root container for WM Quote Platform - manages Quick Quote Wizard and Advanced Builder</description>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__RecordPage</target>
+        <target>lightning__HomePage</target>
+        <target>lightningCommunity__Page</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <objects>
+                <object>Case</object>
+                <object>Opportunity</object>
+                <object>SBQQ__Quote__c</object>
+            </objects>
+            <property name="recordId" type="String" label="Record ID" description="Case, Opportunity, or Quote ID"/>
+            <property name="flowMode" type="String" label="Flow Mode" description="new, edit, amend, or correct" default="new"/>
+        </targetConfig>
+        <targetConfig targets="lightning__AppPage,lightning__HomePage,lightningCommunity__Page">
+            <property name="recordId" type="String" label="Record ID" description="Case, Opportunity, or Quote ID"/>
+            <property name="flowMode" type="String" label="Flow Mode" description="new, edit, amend, or correct" default="new"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

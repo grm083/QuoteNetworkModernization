@@ -1,0 +1,390 @@
+<template>
+    <!-- WM Quick Quote Wizard - 4-step guided quote creation -->
+    <div class="wm-wizard">
+
+        <!-- Progress Indicator -->
+        <div class="wm-wizard-progress">
+            <div class="wm-progress-header">
+                <h2 class="wm-progress-title">Create Quote</h2>
+                <p class="wm-progress-subtitle">{progressText}</p>
+            </div>
+
+            <div class="wm-progress-steps">
+                <div class={step1Class} onclick={handleGoToStep1}>
+                    <div class="wm-step-indicator">
+                        <span class="wm-step-number">1</span>
+                        <lightning-icon icon-name="utility:check" size="x-small" class="wm-step-check"></lightning-icon>
+                    </div>
+                    <span class="wm-step-label">Product</span>
+                </div>
+
+                <div class="wm-step-connector" data-complete={step1Complete}></div>
+
+                <div class={step2Class} onclick={handleGoToStep2}>
+                    <div class="wm-step-indicator">
+                        <span class="wm-step-number">2</span>
+                        <lightning-icon icon-name="utility:check" size="x-small" class="wm-step-check"></lightning-icon>
+                    </div>
+                    <span class="wm-step-label">Details</span>
+                </div>
+
+                <div class="wm-step-connector" data-complete={step2Complete}></div>
+
+                <div class={step3Class} onclick={handleGoToStep3}>
+                    <div class="wm-step-indicator">
+                        <span class="wm-step-number">3</span>
+                        <lightning-icon icon-name="utility:check" size="x-small" class="wm-step-check"></lightning-icon>
+                    </div>
+                    <span class="wm-step-label">Preview</span>
+                </div>
+
+                <div class="wm-step-connector" data-complete={step3Complete}></div>
+
+                <div class={step4Class}>
+                    <div class="wm-step-indicator">
+                        <span class="wm-step-number">4</span>
+                        <lightning-icon icon-name="utility:check" size="x-small" class="wm-step-check"></lightning-icon>
+                    </div>
+                    <span class="wm-step-label">Submit</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="wm-progress-bar">
+                <div class="wm-progress-fill" style={progressBarStyle}></div>
+            </div>
+            <span class="wm-progress-percentage">{progressPercentage}% Complete</span>
+        </div>
+
+        <!-- Step Content -->
+        <div class="wm-wizard-content">
+
+            <!-- Step 1: Product Selection -->
+            <template if:true={isStep1}>
+                <div class="wm-step-container">
+                    <div class="wm-step-header">
+                        <h2>Select Service</h2>
+                        <p>Choose from favorites, recent orders, or search the catalog</p>
+                    </div>
+
+                    <c-smart-favorites-list
+                        account-id={accountId}
+                        case-description={caseDescription}
+                        onproductselect={handleProductSelect}>
+                    </c-smart-favorites-list>
+                </div>
+            </template>
+
+            <!-- Step 2: Service Details -->
+            <template if:true={isStep2}>
+                <div class="wm-step-container">
+                    <div class="wm-step-header">
+                        <h2>Configure Service Details</h2>
+                        <p>Specify location, timing, and service requirements</p>
+                    </div>
+
+                    <!-- Selected Product Preview -->
+                    <template if:true={selectedProduct}>
+                        <div class="wm-selected-product">
+                            <div class="wm-product-preview">
+                                <lightning-icon icon-name="utility:product" size="small"></lightning-icon>
+                                <div>
+                                    <h3>{selectedProduct.name}</h3>
+                                    <p class="wm-product-details">
+                                        {selectedProduct.size} | {selectedProduct.material}
+                                    </p>
+                                </div>
+                                <lightning-button
+                                    label="Change"
+                                    variant="neutral"
+                                    onclick={handleChangeProduct}
+                                    class="wm-change-btn">
+                                </lightning-button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Service Configuration Form -->
+                    <div class="wm-config-sections">
+
+                        <!-- Location Section -->
+                        <div class="wm-config-section">
+                            <div class="wm-section-header">
+                                <h3>
+                                    <span class="wm-section-number">①</span>
+                                    Service Location
+                                </h3>
+                                <lightning-badge
+                                    label={locationStatus}
+                                    variant={locationStatusVariant}>
+                                </lightning-badge>
+                            </div>
+
+                            <lightning-combobox
+                                name="serviceAddress"
+                                label="Service Address"
+                                placeholder="Select or enter address"
+                                options={addressOptions}
+                                value={selectedAddress}
+                                onchange={handleAddressChange}
+                                required
+                                class="wm-input">
+                            </lightning-combobox>
+
+                            <template if:true={showCustomAddress}>
+                                <lightning-input
+                                    label="Street Address"
+                                    value={customAddress}
+                                    onchange={handleCustomAddressChange}
+                                    required>
+                                </lightning-input>
+                            </template>
+                        </div>
+
+                        <!-- Service Date Section -->
+                        <div class="wm-config-section">
+                            <div class="wm-section-header">
+                                <h3>
+                                    <span class="wm-section-number">②</span>
+                                    Service Date
+                                </h3>
+                                <lightning-badge
+                                    label={dateStatus}
+                                    variant={dateStatusVariant}>
+                                </lightning-badge>
+                            </div>
+
+                            <!-- SLA Calculator Display -->
+                            <c-sla-calculator-display
+                                quote-id={quoteId}
+                                quote-line-id={quoteLineId}
+                                account-id={accountId}
+                                onslacalculated={handleSlaCalculated}
+                                ondateselect={handleDateSelect}>
+                            </c-sla-calculator-display>
+
+                            <lightning-input
+                                type="number"
+                                label="Service Duration (days)"
+                                value={serviceDuration}
+                                min="1"
+                                onchange={handleDurationChange}
+                                required>
+                            </lightning-input>
+                        </div>
+
+                        <!-- Service Schedule Section -->
+                        <div class="wm-config-section">
+                            <div class="wm-section-header">
+                                <h3>
+                                    <span class="wm-section-number">③</span>
+                                    Service Schedule
+                                </h3>
+                                <lightning-badge
+                                    label={scheduleStatus}
+                                    variant={scheduleStatusVariant}>
+                                </lightning-badge>
+                            </div>
+
+                            <lightning-radio-group
+                                name="scheduleType"
+                                label="Service Type"
+                                options={scheduleTypeOptions}
+                                value={selectedScheduleType}
+                                onchange={handleScheduleTypeChange}
+                                type="button"
+                                required>
+                            </lightning-radio-group>
+
+                            <template if:true={showRecurringOptions}>
+                                <lightning-combobox
+                                    name="frequency"
+                                    label="Frequency"
+                                    placeholder="Select frequency"
+                                    options={frequencyOptions}
+                                    value={selectedFrequency}
+                                    onchange={handleFrequencyChange}
+                                    required>
+                                </lightning-combobox>
+                            </template>
+                        </div>
+
+                        <!-- Optional Configuration (Expandable) -->
+                        <div class="wm-optional-section">
+                            <lightning-button
+                                label={optionalSectionLabel}
+                                icon-name={optionalSectionIcon}
+                                onclick={toggleOptionalSection}
+                                variant="neutral"
+                                class="wm-expand-btn">
+                            </lightning-button>
+
+                            <template if:true={showOptionalSection}>
+                                <div class="wm-optional-content">
+                                    <lightning-textarea
+                                        label="Access Instructions"
+                                        placeholder="Gate codes, directions, site contact..."
+                                        value={accessInstructions}
+                                        onchange={handleAccessInstructionsChange}>
+                                    </lightning-textarea>
+
+                                    <lightning-input
+                                        label="Special Requirements"
+                                        placeholder="COD, prepayment, permits..."
+                                        value={specialRequirements}
+                                        onchange={handleSpecialRequirementsChange}>
+                                    </lightning-input>
+                                </div>
+                            </template>
+                        </div>
+
+                    </div>
+
+                    <!-- Inline Validation Summary -->
+                    <template if:true={hasValidationIssues}>
+                        <div class="wm-inline-validation">
+                            <lightning-icon icon-name="utility:warning" size="small" variant="warning"></lightning-icon>
+                            <div>
+                                <h4>Please complete required fields:</h4>
+                                <ul>
+                                    <template for:each={validationIssues} for:item="issue">
+                                        <li key={issue.id}>{issue.message}</li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Step 3: Preview & Pricing -->
+            <template if:true={isStep3}>
+                <div class="wm-step-container">
+                    <div class="wm-step-header">
+                        <h2>Review & Get Pricing</h2>
+                        <p>Confirm details and request pricing from vendors</p>
+                    </div>
+
+                    <!-- Quote Summary -->
+                    <div class="wm-quote-summary-card">
+                        <h3>Quote Summary</h3>
+                        <dl class="wm-summary-grid">
+                            <dt>Service:</dt>
+                            <dd>{selectedProduct.name}</dd>
+
+                            <dt>Location:</dt>
+                            <dd>{displayAddress}</dd>
+
+                            <dt>Start Date:</dt>
+                            <dd>{formattedStartDate}</dd>
+
+                            <dt>Duration:</dt>
+                            <dd>{serviceDuration} days</dd>
+
+                            <dt>Schedule:</dt>
+                            <dd>{scheduleDescription}</dd>
+                        </dl>
+                    </div>
+
+                    <!-- Pricing Section -->
+                    <div class="wm-pricing-section">
+                        <template if:false={pricingRequested}>
+                            <div class="wm-pricing-cta">
+                                <lightning-icon icon-name="utility:money" size="large"></lightning-icon>
+                                <h3>Ready for Pricing</h3>
+                                <p>Click below to request pricing from available vendors</p>
+                                <lightning-button
+                                    label="Get Pricing"
+                                    variant="brand"
+                                    icon-name="utility:refresh"
+                                    onclick={handleGetPricing}
+                                    disabled={isLoadingPricing}
+                                    class="wm-btn-primary wm-pricing-btn">
+                                </lightning-button>
+                            </div>
+                        </template>
+
+                        <template if:true={isLoadingPricing}>
+                            <div class="wm-pricing-loading">
+                                <lightning-spinner alternative-text="Requesting pricing..." size="medium"></lightning-spinner>
+                                <p>Requesting pricing from {vendorCount} vendor{vendorPlural}...</p>
+                            </div>
+                        </template>
+
+                        <template if:true={pricingReceived}>
+                            <div class="wm-pricing-result">
+                                <div class="wm-pricing-header">
+                                    <lightning-icon icon-name="utility:success" variant="success" size="small"></lightning-icon>
+                                    <h3>Pricing Received</h3>
+                                </div>
+                                <div class="wm-pricing-amount">
+                                    <span class="wm-price-label">Total Quote:</span>
+                                    <span class="wm-price-value">
+                                        <lightning-formatted-number
+                                            value={totalPrice}
+                                            format-style="currency"
+                                            currency-code="USD">
+                                        </lightning-formatted-number>
+                                    </span>
+                                </div>
+                                <p class="wm-pricing-note">{pricingNote}</p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Step 4: Submit -->
+            <template if:true={isStep4}>
+                <div class="wm-step-container">
+                    <div class="wm-step-header">
+                        <h2>Submit Quote</h2>
+                        <p>Review final details and submit for approval or send to customer</p>
+                    </div>
+
+                    <!-- Success state will be shown here after submission -->
+                    <div class="wm-submit-section">
+                        <lightning-icon icon-name="utility:success" size="large" variant="success"></lightning-icon>
+                        <h3>Quote Ready to Submit</h3>
+                        <p>All required information has been collected and validated.</p>
+                    </div>
+                </div>
+            </template>
+
+        </div>
+
+        <!-- Wizard Navigation Footer -->
+        <div class="wm-wizard-footer">
+            <lightning-button
+                label="Back"
+                onclick={handleBack}
+                disabled={isFirstStep}
+                class="wm-nav-btn">
+            </lightning-button>
+
+            <div class="wm-footer-right">
+                <template if:false={isLastStep}>
+                    <lightning-button
+                        label={nextButtonLabel}
+                        variant="brand"
+                        onclick={handleNext}
+                        disabled={!canProceed}
+                        class="wm-btn-primary wm-nav-btn">
+                    </lightning-button>
+                </template>
+
+                <template if:true={isLastStep}>
+                    <lightning-button
+                        label="Submit Quote"
+                        variant="brand"
+                        icon-name="utility:check"
+                        onclick={handleSubmit}
+                        disabled={isSubmitting}
+                        class="wm-btn-primary wm-submit-btn">
+                    </lightning-button>
+                </template>
+            </div>
+        </div>
+
+    </div>
+</template>

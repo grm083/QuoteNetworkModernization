@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningMessageChannel xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Quote state updates for cross-component communication in Quote Flow</description>
+    <isExposed>true</isExposed>
+    <lightningMessageFields>
+        <fieldName>quoteId</fieldName>
+        <description>Quote record ID</description>
+    </lightningMessageFields>
+    <lightningMessageFields>
+        <fieldName>action</fieldName>
+        <description>State change action: lineAdded, lineUpdated, lineDeleted, validated, priced, stepChanged</description>
+    </lightningMessageFields>
+    <lightningMessageFields>
+        <fieldName>payload</fieldName>
+        <description>Action-specific data as JSON</description>
+    </lightningMessageFields>
+    <lightningMessageFields>
+        <fieldName>source</fieldName>
+        <description>Component that triggered the state change</description>
+    </lightningMessageFields>
+    <masterLabel>Quote State Channel</masterLabel>
+</LightningMessageChannel>

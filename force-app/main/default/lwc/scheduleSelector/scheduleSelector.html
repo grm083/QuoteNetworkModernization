@@ -1,0 +1,296 @@
+<template>
+    <!-- Schedule Selector Component -->
+    <div class="wm-schedule-selector">
+
+        <!-- ========== Service Type Toggle ========== -->
+        <div class="wm-service-type-section">
+            <h3 class="wm-section-header">Service Type</h3>
+
+            <div class="wm-service-type-toggle">
+                <div class={oneTimeCardClass} onclick={handleSelectOneTime}>
+                    <div class="wm-type-icon">
+                        <lightning-icon icon-name="utility:event" size="medium"></lightning-icon>
+                    </div>
+                    <div class="wm-type-content">
+                        <div class="wm-type-label">One-Time Service</div>
+                        <div class="wm-type-description">Single service on a specific date</div>
+                    </div>
+                    <template if:true={isOneTime}>
+                        <div class="wm-type-selected">
+                            <lightning-icon icon-name="utility:check" size="small"></lightning-icon>
+                        </div>
+                    </template>
+                </div>
+
+                <div class={recurringCardClass} onclick={handleSelectRecurring}>
+                    <div class="wm-type-icon">
+                        <lightning-icon icon-name="utility:recurring_exception" size="medium"></lightning-icon>
+                    </div>
+                    <div class="wm-type-content">
+                        <div class="wm-type-label">Recurring Service</div>
+                        <div class="wm-type-description">Scheduled services on a regular basis</div>
+                    </div>
+                    <template if:true={isRecurring}>
+                        <div class="wm-type-selected">
+                            <lightning-icon icon-name="utility:check" size="small"></lightning-icon>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== One-Time Schedule Details ========== -->
+        <template if:true={isOneTime}>
+            <div class="wm-schedule-details">
+                <h3 class="wm-section-header">Service Date</h3>
+
+                <div class="wm-onetime-info">
+                    <lightning-icon icon-name="utility:info" size="small" class="wm-info-icon"></lightning-icon>
+                    <div class="wm-info-content">
+                        <p>Your service will be scheduled for <strong>{formattedServiceDate}</strong> based on the SLA calculation.</p>
+                        <p class="wm-info-note">You can adjust this date in the previous step if needed.</p>
+                    </div>
+                </div>
+
+                <div class="wm-onetime-summary">
+                    <div class="wm-summary-item">
+                        <span class="wm-summary-label">Service Date:</span>
+                        <span class="wm-summary-value">{formattedServiceDate}</span>
+                    </div>
+                    <div class="wm-summary-item">
+                        <span class="wm-summary-label">Service Time:</span>
+                        <span class="wm-summary-value">{formattedServiceTime}</span>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- ========== Recurring Schedule Configuration ========== -->
+        <template if:true={isRecurring}>
+            <div class="wm-schedule-details">
+
+                <!-- Frequency Selection -->
+                <div class="wm-frequency-section">
+                    <h3 class="wm-section-header">Service Frequency</h3>
+
+                    <lightning-radio-group
+                        label="How often should service occur?"
+                        options={frequencyOptions}
+                        value={selectedFrequency}
+                        onchange={handleFrequencyChange}
+                        type="button"
+                        class="wm-frequency-radio">
+                    </lightning-radio-group>
+                </div>
+
+                <!-- Day of Week Selection (for Weekly/Bi-Weekly) -->
+                <template if:true={showDayOfWeekSelector}>
+                    <div class="wm-day-selector">
+                        <h3 class="wm-section-header">Service Day</h3>
+
+                        <div class="wm-day-buttons">
+                            <template for:each={daysOfWeek} for:item="day">
+                                <button
+                                    key={day.value}
+                                    class={day.buttonClass}
+                                    onclick={handleDayOfWeekClick}
+                                    data-day={day.value}>
+                                    {day.label}
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Day of Month Selection (for Monthly) -->
+                <template if:true={showDayOfMonthSelector}>
+                    <div class="wm-day-selector">
+                        <h3 class="wm-section-header">Day of Month</h3>
+
+                        <lightning-combobox
+                            label="Select Day"
+                            placeholder="Select day of month"
+                            value={selectedDayOfMonth}
+                            options={dayOfMonthOptions}
+                            onchange={handleDayOfMonthChange}
+                            class="wm-day-dropdown">
+                        </lightning-combobox>
+                    </div>
+                </template>
+
+                <!-- Start Date -->
+                <div class="wm-start-date-section">
+                    <h3 class="wm-section-header">Start Date</h3>
+
+                    <lightning-input
+                        type="date"
+                        label="First Service Date"
+                        value={recurringStartDate}
+                        min={minimumStartDate}
+                        onchange={handleStartDateChange}
+                        required
+                        field-level-help="First occurrence of the recurring service"
+                        class="wm-date-input">
+                    </lightning-input>
+                </div>
+
+                <!-- Duration/End Options -->
+                <div class="wm-duration-section">
+                    <h3 class="wm-section-header">Service Duration</h3>
+
+                    <lightning-radio-group
+                        label="How long should this service continue?"
+                        options={durationOptions}
+                        value={selectedDuration}
+                        onchange={handleDurationChange}
+                        class="wm-duration-radio">
+                    </lightning-radio-group>
+
+                    <!-- End Date (if specific end date selected) -->
+                    <template if:true={showEndDate}>
+                        <div class="wm-end-date-input">
+                            <lightning-input
+                                type="date"
+                                label="End Date"
+                                value={recurringEndDate}
+                                min={minimumEndDate}
+                                onchange={handleEndDateChange}
+                                required
+                                field-level-help="Last service will occur on or before this date"
+                                class="wm-date-input">
+                            </lightning-input>
+                        </div>
+                    </template>
+
+                    <!-- Number of Occurrences (if specific count selected) -->
+                    <template if:true={showOccurrenceCount}>
+                        <div class="wm-occurrence-input">
+                            <lightning-input
+                                type="number"
+                                label="Number of Services"
+                                value={occurrenceCount}
+                                min="1"
+                                max="52"
+                                onchange={handleOccurrenceCountChange}
+                                required
+                                field-level-help="Total number of service occurrences"
+                                class="wm-number-input">
+                            </lightning-input>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Schedule Preview -->
+                <template if:true={hasRecurringSchedule}>
+                    <div class="wm-schedule-preview">
+                        <h3 class="wm-section-header">
+                            <lightning-icon icon-name="utility:preview" size="x-small"></lightning-icon>
+                            Schedule Preview
+                        </h3>
+
+                        <div class="wm-preview-summary">
+                            <p class="wm-preview-description">{scheduleDescription}</p>
+
+                            <template if:true={showUpcomingDates}>
+                                <div class="wm-upcoming-dates">
+                                    <h4 class="wm-upcoming-header">Next {upcomingDates.length} Service Dates:</h4>
+                                    <ul class="wm-dates-list">
+                                        <template for:each={upcomingDates} for:item="date">
+                                            <li key={date.key} class="wm-date-item">
+                                                <lightning-icon icon-name="utility:event" size="xx-small"></lightning-icon>
+                                                <span>{date.formatted}</span>
+                                            </li>
+                                        </template>
+                                    </ul>
+
+                                    <template if:true={hasMoreDates}>
+                                        <p class="wm-more-dates">...and {remainingDatesCount} more</p>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Total Service Count -->
+                        <div class="wm-total-services">
+                            <lightning-icon icon-name="utility:routing_offline" size="small"></lightning-icon>
+                            <div class="wm-total-content">
+                                <span class="wm-total-label">Total Services:</span>
+                                <span class="wm-total-value">{totalServicesText}</span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- ========== Schedule Summary Card ========== -->
+        <template if:true={hasValidSchedule}>
+            <div class="wm-schedule-summary">
+                <div class="wm-summary-header">
+                    <h3>
+                        <lightning-icon icon-name="utility:success" size="x-small" class="wm-success-icon"></lightning-icon>
+                        Schedule Configured
+                    </h3>
+                </div>
+
+                <div class="wm-summary-content">
+                    <div class="wm-summary-grid">
+                        <div class="wm-summary-row">
+                            <span class="wm-summary-label">Service Type:</span>
+                            <span class="wm-summary-value">{serviceTypeLabel}</span>
+                        </div>
+
+                        <template if:true={isOneTime}>
+                            <div class="wm-summary-row">
+                                <span class="wm-summary-label">Date:</span>
+                                <span class="wm-summary-value">{formattedServiceDate}</span>
+                            </div>
+                        </template>
+
+                        <template if:true={isRecurring}>
+                            <div class="wm-summary-row">
+                                <span class="wm-summary-label">Frequency:</span>
+                                <span class="wm-summary-value">{frequencyLabel}</span>
+                            </div>
+
+                            <template if:true={selectedDayOfWeek}>
+                                <div class="wm-summary-row">
+                                    <span class="wm-summary-label">Day:</span>
+                                    <span class="wm-summary-value">{dayOfWeekLabel}</span>
+                                </div>
+                            </template>
+
+                            <template if:true={selectedDayOfMonth}>
+                                <div class="wm-summary-row">
+                                    <span class="wm-summary-label">Day of Month:</span>
+                                    <span class="wm-summary-value">{dayOfMonthLabel}</span>
+                                </div>
+                            </template>
+
+                            <div class="wm-summary-row">
+                                <span class="wm-summary-label">Starts:</span>
+                                <span class="wm-summary-value">{formattedStartDate}</span>
+                            </div>
+
+                            <div class="wm-summary-row">
+                                <span class="wm-summary-label">Duration:</span>
+                                <span class="wm-summary-value">{durationLabel}</span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- ========== Error State ========== -->
+        <template if:true={hasError}>
+            <div class="wm-error-state">
+                <lightning-icon icon-name="utility:error" size="small"></lightning-icon>
+                <div class="wm-error-content">
+                    <h4>Configuration Error</h4>
+                    <p>{errorMessage}</p>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>
