@@ -1,0 +1,470 @@
+<template>
+    <!-- Procurement Workbench Component -->
+    <div class="wm-procurement-workbench">
+
+        <!-- ========== Header ========== -->
+        <div class="wm-workbench-header">
+            <div class="wm-header-title">
+                <h1>
+                    <lightning-icon icon-name="custom:custom85" size="medium"></lightning-icon>
+                    WM Procurement Workbench
+                </h1>
+                <div class="wm-quote-number">Quote #{quoteNumber}</div>
+            </div>
+            <div class="wm-header-status">
+                <lightning-badge label={quoteStatus} class="wm-status-badge"></lightning-badge>
+                <span class="wm-assigned">Assigned to: You</span>
+                <span class="wm-due-time">Due: {dueTimeFormatted}</span>
+            </div>
+        </div>
+
+        <!-- ========== Main Content Area ========== -->
+        <div class="wm-workbench-content">
+
+            <!-- Left Column: Overview & Grid -->
+            <div class="wm-main-column">
+
+                <!-- Quote Overview -->
+                <div class="wm-quote-overview">
+                    <h2>Quote Overview</h2>
+                    <dl class="wm-overview-list">
+                        <div class="wm-overview-item">
+                            <dt>Customer:</dt>
+                            <dd>{customerName}</dd>
+                        </div>
+                        <div class="wm-overview-item">
+                            <dt>Location:</dt>
+                            <dd>{serviceLocation}</dd>
+                        </div>
+                        <div class="wm-overview-item">
+                            <dt>Primary Component:</dt>
+                            <dd>{primaryComponent}</dd>
+                        </div>
+                        <div class="wm-overview-item">
+                            <dt>Waste Stream:</dt>
+                            <dd>{wasteStream}</dd>
+                        </div>
+                        <div class="wm-overview-item">
+                            <dt>Service Date:</dt>
+                            <dd>{serviceDateFormatted}</dd>
+                        </div>
+                        <div class="wm-overview-item wm-progress-item">
+                            <dt>Lines:</dt>
+                            <dd>
+                                <div class="wm-progress-text">
+                                    {totalLines} total
+                                    <span class="wm-complete">✓ {completeLines} complete</span>
+                                    <span class="wm-incomplete">⚠ {incompleteLines} incomplete</span>
+                                </div>
+                                <lightning-progress-bar value={completionPercentage} size="medium"></lightning-progress-bar>
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <!-- Quote Lines Grid -->
+                <div class="wm-grid-section">
+                    <div class="wm-grid-header">
+                        <h2>Quote Lines</h2>
+                        <div class="wm-grid-controls">
+                            <lightning-input
+                                type="checkbox"
+                                label="Select All"
+                                checked={allLinesSelected}
+                                onchange={handleSelectAll}
+                                class="wm-select-all">
+                            </lightning-input>
+                            <span class="wm-showing">Showing {quoteLines.length} lines</span>
+                            <lightning-combobox
+                                label="Filter"
+                                value={filterOption}
+                                options={filterOptions}
+                                onchange={handleFilterChange}
+                                class="wm-filter-dropdown">
+                            </lightning-combobox>
+                        </div>
+                    </div>
+
+                    <!-- Editable Data Table -->
+                    <div class="wm-grid-container">
+                        <table class="wm-data-grid">
+                            <thead>
+                                <tr>
+                                    <th class="wm-col-check">☑</th>
+                                    <th class="wm-col-number">#</th>
+                                    <th class="wm-col-service">Service</th>
+                                    <th class="wm-col-frequency">Frequency</th>
+                                    <th class="wm-col-vendor">Vendor</th>
+                                    <th class="wm-col-score">Score</th>
+                                    <th class="wm-col-cost">Cost</th>
+                                    <th class="wm-col-mas">MAS</th>
+                                    <th class="wm-col-status">⚠</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={quoteLines} for:item="line">
+                                    <tr key={line.id} class={line.rowClass} onclick={handleLineClick} data-line-id={line.id}>
+                                        <td class="wm-col-check">
+                                            <lightning-input
+                                                type="checkbox"
+                                                checked={line.selected}
+                                                onchange={handleLineSelect}
+                                                data-line-id={line.id}
+                                                class="wm-line-checkbox">
+                                            </lightning-input>
+                                        </td>
+                                        <td class="wm-col-number">{line.lineNumber}</td>
+                                        <td class="wm-col-service">
+                                            <div class="wm-service-name">{line.serviceName}</div>
+                                            <div class="wm-service-detail">{line.serviceDetail}</div>
+                                        </td>
+                                        <td class="wm-col-frequency">{line.frequency}</td>
+                                        <td class="wm-col-vendor">
+                                            <template if:true={line.hasVendor}>
+                                                <div class="wm-vendor-name">{line.vendorName}</div>
+                                            </template>
+                                            <template if:false={line.hasVendor}>
+                                                <button class="wm-select-vendor-btn" onclick={handleSelectVendor} data-line-id={line.id}>
+                                                    Select...
+                                                </button>
+                                            </template>
+                                        </td>
+                                        <td class="wm-col-score">
+                                            <template if:true={line.hasScore}>
+                                                <span class={line.scoreClass}>{line.vendorScore}</span>
+                                            </template>
+                                            <template if:false={line.hasScore}>
+                                                --
+                                            </template>
+                                        </td>
+                                        <td class="wm-col-cost">
+                                            <template if:true={line.hasCost}>
+                                                {line.formattedCost}
+                                            </template>
+                                            <template if:false={line.hasCost}>
+                                                <lightning-input
+                                                    type="number"
+                                                    value={line.unitCost}
+                                                    onchange={handleCostChange}
+                                                    data-line-id={line.id}
+                                                    formatter="currency"
+                                                    step="0.01"
+                                                    class="wm-cost-input">
+                                                </lightning-input>
+                                            </template>
+                                        </td>
+                                        <td class="wm-col-mas">
+                                            <template if:true={line.masComplete}>
+                                                <lightning-icon icon-name="utility:success" size="x-small" variant="success"></lightning-icon>
+                                            </template>
+                                            <template if:false={line.masComplete}>
+                                                <button class="wm-config-mas-btn" onclick={handleConfigureMAS} data-line-id={line.id}>
+                                                    📝
+                                                </button>
+                                            </template>
+                                        </td>
+                                        <td class="wm-col-status">
+                                            <template if:true={line.isValid}>
+                                                <lightning-icon icon-name="utility:success" size="x-small" variant="success"></lightning-icon>
+                                            </template>
+                                            <template if:false={line.isValid}>
+                                                <lightning-icon icon-name="utility:warning" size="x-small" variant="warning" title={line.validationMessage}></lightning-icon>
+                                            </template>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Add Line Button -->
+                    <div class="wm-grid-footer">
+                        <lightning-button
+                            variant="base"
+                            label="Add Vendor Charge Line"
+                            icon-name="utility:add"
+                            onclick={handleAddChargeLine}
+                            class="wm-add-line-btn">
+                        </lightning-button>
+                    </div>
+                </div>
+
+                <!-- Line Details Panel -->
+                <template if:true={hasSelectedLine}>
+                    <div class="wm-line-details">
+                        <div class="wm-details-header">
+                            <h2>Line {selectedLine.lineNumber}: {selectedLine.serviceName}</h2>
+                            <button class="wm-close-details" onclick={handleCloseDetails}>
+                                <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                            </button>
+                        </div>
+
+                        <!-- Vendor Selection Section -->
+                        <div class="wm-details-section">
+                            <h3>
+                                <lightning-icon icon-name="utility:groups" size="x-small"></lightning-icon>
+                                Vendor Selection
+                            </h3>
+                            <c-vendor-search
+                                quote-id={quoteId}
+                                line-id={selectedLine.id}
+                                location-id={locationId}
+                                onvendorselect={handleVendorSelected}>
+                            </c-vendor-search>
+                        </div>
+
+                        <!-- Cost Configuration Section -->
+                        <div class="wm-details-section">
+                            <h3>
+                                <lightning-icon icon-name="utility:money" size="x-small"></lightning-icon>
+                                Cost Configuration
+                            </h3>
+
+                            <div class="wm-cost-fields">
+                                <lightning-combobox
+                                    label="Cost Model"
+                                    value={selectedLine.costModel}
+                                    options={costModelOptions}
+                                    onchange={handleCostModelChange}
+                                    required
+                                    class="wm-cost-model">
+                                </lightning-combobox>
+
+                                <lightning-combobox
+                                    label="Cost UOM"
+                                    value={selectedLine.costUOM}
+                                    options={costUOMOptions}
+                                    onchange={handleCostUOMChange}
+                                    required
+                                    class="wm-cost-uom">
+                                </lightning-combobox>
+
+                                <lightning-input
+                                    type="number"
+                                    label="Unit Cost"
+                                    value={selectedLine.unitCost}
+                                    onchange={handleUnitCostChange}
+                                    formatter="currency"
+                                    step="0.01"
+                                    required
+                                    class="wm-unit-cost">
+                                </lightning-input>
+
+                                <lightning-input
+                                    type="date"
+                                    label="Vendor Commit Date"
+                                    value={selectedLine.commitDate}
+                                    onchange={handleCommitDateChange}
+                                    class="wm-commit-date">
+                                </lightning-input>
+                            </div>
+
+                            <div class="wm-cost-info">
+                                <lightning-icon icon-name="utility:info" size="xx-small"></lightning-icon>
+                                <span>Cost will be used to calculate customer pricing in the next phase based on customer contract margins</span>
+                            </div>
+                        </div>
+
+                        <!-- MAS Configuration Section -->
+                        <template if:true={selectedLineRequiresMAS}>
+                            <div class="wm-details-section">
+                                <h3>
+                                    <lightning-icon icon-name="utility:settings" size="x-small"></lightning-icon>
+                                    MAS Configuration
+                                </h3>
+                                <c-mas-configuration
+                                    quote-line-id={selectedLine.id}
+                                    vendor-id={selectedLine.vendorId}
+                                    location-id={locationId}
+                                    onmasupdate={handleMASUpdated}>
+                                </c-mas-configuration>
+                            </div>
+                        </template>
+
+                        <!-- Line Actions -->
+                        <div class="wm-details-actions">
+                            <lightning-button
+                                variant="neutral"
+                                label="Cancel Changes"
+                                onclick={handleCancelLineChanges}
+                                class="wm-btn-secondary">
+                            </lightning-button>
+
+                            <lightning-button
+                                variant="brand"
+                                label="Save Line"
+                                onclick={handleSaveLine}
+                                class="wm-btn-primary">
+                            </lightning-button>
+
+                            <lightning-button
+                                variant="brand"
+                                label="Save & Next Line"
+                                icon-name="utility:forward"
+                                icon-position="right"
+                                onclick={handleSaveAndNext}
+                                class="wm-btn-primary">
+                            </lightning-button>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Validation Summary -->
+                <template if:true={hasValidationErrors}>
+                    <div class="wm-validation-summary">
+                        <div class="wm-validation-header">
+                            <lightning-icon icon-name="utility:warning" size="small"></lightning-icon>
+                            <h3>{validationErrorCount} lines need attention</h3>
+                        </div>
+                        <ul class="wm-validation-list">
+                            <template for:each={validationErrors} for:item="error">
+                                <li key={error.lineId} class="wm-validation-item">
+                                    <strong>Line {error.lineNumber}:</strong> {error.message}
+                                    <button class="wm-fix-link" onclick={handleFixValidation} data-line-id={error.lineId}>
+                                        Fix This →
+                                    </button>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Right Column: Bulk Actions -->
+            <div class="wm-actions-column">
+                <div class="wm-bulk-actions">
+                    <h2>Bulk Actions</h2>
+
+                    <div class="wm-selection-info">
+                        <lightning-icon icon-name="utility:check" size="x-small"></lightning-icon>
+                        <span>Selected: {selectedLineCount} of {totalLines} lines</span>
+                    </div>
+
+                    <lightning-button
+                        variant="neutral"
+                        label="Apply Vendor to Selected"
+                        icon-name="utility:groups"
+                        onclick={handleBulkVendor}
+                        disabled={noBulkSelection}
+                        class="wm-bulk-btn">
+                    </lightning-button>
+
+                    <lightning-button
+                        variant="neutral"
+                        label="Upload Costs (CSV)"
+                        icon-name="utility:upload"
+                        onclick={handleBulkUpload}
+                        class="wm-bulk-btn">
+                    </lightning-button>
+
+                    <lightning-button
+                        variant="neutral"
+                        label="Configure MAS for All"
+                        icon-name="utility:settings"
+                        onclick={handleBulkMAS}
+                        disabled={noBulkSelection}
+                        class="wm-bulk-btn">
+                    </lightning-button>
+
+                    <lightning-button
+                        variant="neutral"
+                        label="Validate All Lines"
+                        icon-name="utility:checkin"
+                        onclick={handleValidateAll}
+                        class="wm-bulk-btn">
+                    </lightning-button>
+
+                    <div class="wm-actions-divider"></div>
+
+                    <lightning-button
+                        variant="neutral"
+                        label="Save Progress"
+                        icon-name="utility:save"
+                        onclick={handleSaveProgress}
+                        class="wm-save-btn">
+                    </lightning-button>
+
+                    <lightning-button
+                        variant="brand"
+                        label="Complete Procurement"
+                        icon-name="utility:forward"
+                        onclick={handleCompleteProcurement}
+                        disabled={hasValidationErrors}
+                        class="wm-btn-primary wm-complete-btn">
+                    </lightning-button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== Footer Navigation ========== -->
+        <div class="wm-workbench-footer">
+            <lightning-button
+                variant="neutral"
+                label="Back to Draft"
+                icon-name="utility:back"
+                onclick={handleBackToDraft}
+                class="wm-btn-secondary">
+            </lightning-button>
+
+            <div class="wm-footer-info">
+                Last saved: {lastSavedTime}
+            </div>
+        </div>
+
+        <!-- ========== Modals ========== -->
+
+        <!-- Bulk Vendor Modal -->
+        <template if:true={showBulkVendorModal}>
+            <section role="dialog" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">Apply Vendor to Selected Lines</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <c-vendor-search
+                            quote-id={quoteId}
+                            location-id={locationId}
+                            bulk-mode="true"
+                            onvendorselect={handleBulkVendorSelected}>
+                        </c-vendor-search>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button
+                            variant="neutral"
+                            label="Cancel"
+                            onclick={handleCloseBulkVendorModal}>
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <!-- CSV Upload Modal -->
+        <template if:true={showUploadModal}>
+            <section role="dialog" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">Upload Costs via CSV</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <c-cost-bulk-upload
+                            quote-id={quoteId}
+                            quote-lines={quoteLines}
+                            onuploadcomplete={handleUploadComplete}>
+                        </c-cost-bulk-upload>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button
+                            variant="neutral"
+                            label="Close"
+                            onclick={handleCloseUploadModal}>
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+    </div>
+</template>
